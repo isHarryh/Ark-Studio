@@ -1,0 +1,13 @@
+# Exclude
+/*/
+__pycache__/
+*.exe
+*.json
+*.log
+
+# Include
+!.github/
+!.vscode/
+!assets/
+!docs/
+!src/
