@@ -126,6 +126,7 @@ class _StyleHub:
     FONT_S = _DefFont(size=12)
     FONT_M = _DefFont(size=13)
     FONT_MB = _DefFont(size=13)
+    FONT_L = _DefFont(size=14)
     FONT_LB = _DefFont(size=14, bold=True)
     FONT_XLB = _DefFont(size=20, bold=True)
     THEME = [
@@ -205,6 +206,8 @@ class _StyleHub:
         'progress_bar_grid': {'padx': 10,
                               'pady': 5,
                               'sticky': 'ew'},
+        # Treeview
+        'treeview_empty_tip': {'font': FONT_L},
     }
 
 class _IconHub:
@@ -245,6 +248,7 @@ class _TTkStyleHub:
     def load_style_to(master:tk.Misc):
         ttk_style = ttk.Style(master)
         ttk_style.theme_use('default')
+        # https://www.tcl-lang.org/man/tcl8.6/TkCmd/ttk_treeview.htm
         ttk_style.configure('Treeview',
                             font=_StyleHub.FONT_XXS.as_tuple(),
                             padding=2,
@@ -260,3 +264,5 @@ class _TTkStyleHub:
                             relief='none')
         ttk_style.map('Treeview.Heading',
                       background=[('active', _StyleHub.THEME[1])],)
+        # https://www.tcl-lang.org/man/tcl8.6/TkCmd/ttk_scrollbar.htm
+        ttk_style.configure('TScrollbar', relief='none')

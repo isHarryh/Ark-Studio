@@ -133,7 +133,7 @@ class _ExplorerPanel(ctk.CTkFrame):
         self.title = ctk.CTkLabel(self, text="对象浏览器", image=icon('explorer'), **style('panel_title'))
         self.title.grid(row=0, column=0, **style('panel_title_grid'))
         self.children_map:"dict[ac.FileInfoBase,set[abh.ObjectInfo]]" = None
-        self.treeview:"uic.TreeviewFrame[abh.ObjectInfo]" = uic.TreeviewFrame(self, 1, 0, columns=3, tree_mode=False)
+        self.treeview:"uic.TreeviewFrame[abh.ObjectInfo]" = uic.TreeviewFrame(self, 1, 0, columns=3, tree_mode=False, empty_tip="列表为空")
         self.treeview.set_column(0, 350, "对象名称")
         self.treeview.set_column(1, 100, "类型")
         self.treeview.set_column(2, 150, "PathID", anchor='ne')

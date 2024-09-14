@@ -35,6 +35,12 @@ class BiMap(Generic[_KT,_VT]):
     def values(self):
         return self._backward.keys()
 
+    def items_k2v(self):
+        return self._forward.items()
+
+    def items_v2k(self):
+        return self._backward.items()
+
     def get_key(self, value:_VT, default:_VT=None) -> _KT:
         return self._backward.get(value, default)
 

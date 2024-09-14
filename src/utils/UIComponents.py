@@ -124,7 +124,7 @@ class ProgressBarGroup(ctk.CTkFrame, HidableGridWidget):
         self._prog.grid(row=0, column=1)
 
     def set_head_text(self, value:str):
-        """Sets a new head text;"""
+        """Sets a new head text."""
         self._head.configure(text=value)
 
     def bind_task(self, task:GUITaskBase):
@@ -141,7 +141,7 @@ _ITEM_TYPE = TypeVar('_ITEM_TYPE')
 class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
     """Treeview frame widget."""
 
-    def __init__(self, master:ctk.CTkFrame, grid_row:int, grid_column:int, columns:int=1, tree_mode:bool=True):
+    def __init__(self, master:ctk.CTkFrame, grid_row:int, grid_column:int, columns:int=1, tree_mode:bool=True, empty_tip:str=""):
         ctk.CTkFrame.__init__(self, master, fg_color='transparent')
         HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=True, sticky='nsew')
         self._inited = False
@@ -162,12 +162,23 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         # Runtime variables
         self.treeview:ttk.Treeview = None
         self.iid2item:"BiMap[int,_ITEM_TYPE]" = None
+        self._scroll_bar = None
+        self._sort_reverse = False
+        # Show empty tip
+        self._empty_tip_label = ctk.CTkLabel(self, text=empty_tip, **style('treeview_empty_tip'))
+        self._empty_tip_label.grid(row=0, column=0)
 
-    def set_column(self, index:int, pref_width:int, head_text:str, anchor:str='nw'):
+    def set_column(self, column_index:int, pref_width:int, head_text:str, anchor:str='nw'):
         """Sets the detailed config of the specified column. Index starts from `0`."""
-        self._columns_settings[index] = lambda: (
-            self.treeview.heading(f'#{index}', text=head_text, anchor='nw'),
-            self.treeview.column(f'#{index}', width=pref_width, minwidth=pref_width // 2, anchor=anchor)
+        column = f'#{column_index}'
+        self._columns_settings[column_index] = lambda: (
+            self.treeview.heading(column,
+                                  text=head_text,
+                                  anchor='nw',
+                                  command=lambda:self._sort_by_column(column)),
+            self.treeview.column(column,
+                                 width=pref_width,
+                                 minwidth=pref_width // 2, anchor=anchor)
         )
 
     def set_text_extractor(self, consumer:"Callable[[_ITEM_TYPE],str]"):
@@ -210,9 +221,13 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         self.treeview = ttk.Treeview(self, columns=self._columns, height=20)
         for i in self._columns_settings.values():
             i()
-        self.treeview.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
+        self.treeview.grid(row=0, column=0, padx=(5, 0), pady=(0, 5), sticky='nsew')
         self.treeview.tag_bind('general_tag', '<<TreeviewOpen>>', self._item_opened)
         self.treeview.tag_bind('general_tag', '<<TreeviewSelect>>', self._item_selected)
+        # Scroll bar reset
+        self._scroll_bar = ttk.Scrollbar(self, orient='vertical', command=self.treeview.yview)
+        self._scroll_bar.grid(row=0, column=1, padx=(0, 5), pady=(0, 5), sticky='ns')
+        self.treeview.configure(yscrollcommand=self._scroll_bar.set)
         # IID map reset
         self.iid2item = BiMap()
         self._inited = True
@@ -254,6 +269,26 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
             self.treeview.delete(i)
             if i in self.iid2item.keys():
                 del self.iid2item[i]
+
+    def _sort_by_column(self, column:str):
+        if not self._inited:
+            raise RuntimeError("Treeview not initialized")
+        if self._tree_mode:
+            return # Sorting is not supported in tree mode
+        # Sort the items
+        if column == '#0':
+            # For the display column, just sort by the raw insert order
+            l = [self.iid2item.get_value(iid) for iid in self.treeview.get_children('')]
+            l = self._insert_sorter(l)
+            for i, item in enumerate(reversed(l) if self._sort_reverse else l):
+                self.treeview.move(self.iid2item.get_key(item), '', i)
+        else:
+            # For value columns, sort by the cell value
+            l = [(self.treeview.set(iid, column), iid) for iid in self.treeview.get_children('')]
+            l.sort(reverse=self._sort_reverse)
+            for i, (_, iid) in enumerate(l):
+                self.treeview.move(iid, '', i)
+        self._sort_reverse = not self._sort_reverse
 
     def _item_opened(self, _:tk.Event):
         iid = self.treeview.selection()[0]
@@ -311,7 +346,7 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
         self.grid_columnconfigure((0), weight=1)
         master.bind('<Configure>', self._on_resize)
         self._empty_tip = empty_tip
-        self._tk_image = ''
+        self._tk_image = None
         self._size_request = (self.display.winfo_width(), self.display.winfo_height())
         self._size_current = (-1, -1)
         self._aspect_ratio = 1
@@ -326,8 +361,8 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
             self.display.configure(text="")
             self.info.configure(text=f"{value.width} * {value.height}")
         else:
-            self._tk_image = ''
-            self._size_current = (-1, -1)
+            self._tk_image = ctk.CTkImage(Image.new('RGBA', (1, 1)))
+            self._size_current = (1, 1)
             self._aspect_ratio = 1.0
             self.display.configure(text=self._empty_tip)
             self.info.configure(text="")
