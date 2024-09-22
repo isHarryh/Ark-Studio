@@ -6,9 +6,12 @@ import tkinter.ttk as ttk
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from typing import Callable, Any, TypeVar, Generic
+
 from .UIStyles import style, icon
 from .UIConcurrent import GUITaskBase
+from ..utils.AnalyUtils import DurationFormatter
 from ..utils.BiMap import BiMap
+from .AudioComposer import AudioComposer, AudioTrack
 
 
 ################
@@ -337,9 +340,9 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
     def __init__(self, master:ctk.CTkFrame, grid_row:int, grid_column:int, empty_tip:str=""):
         ctk.CTkFrame.__init__(self, master, fg_color='transparent')
         HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=True, sticky='nsew')
-        self.display = ctk.CTkLabel(self)
-        self.display.grid(row=0, column=0, sticky='ew')
-        self.info = ctk.CTkLabel(self, compound='center', anchor='center')
+        self.display = ctk.CTkLabel(self, compound='bottom')
+        self.display.grid(row=0, column=0, pady=5, sticky='ew')
+        self.info = ctk.CTkLabel(self, anchor='center')
         self.info.grid(row=1, column=0, sticky='ew')
         self.grid_rowconfigure((0), weight=1)
         self.grid_rowconfigure((1), weight=0)
@@ -384,3 +387,107 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
     def _on_resize(self, event:tk.Event):
         self._size_request = (event.width, event.height)
         self._fit()
+
+
+class AudioController(ctk.CTkFrame, HidableGridWidget):
+    def __init__(self, master:"AudioPreviewer", grid_row:int, grid_column:int, audio_name:str, audio_data:bytes):
+        ctk.CTkFrame.__init__(self, master, fg_color='transparent')
+        HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=True, sticky='ew')
+        self.track = AudioTrack(audio_data)
+        self.name = ctk.CTkLabel(self, **style('audio_ctrl_name'))
+        self.name.grid(row=0, column=0, columnspan=3)
+        self.name.configure(text=audio_name)
+        self.info = ctk.CTkLabel(self, **style('audio_ctrl_info'))
+        self.info.grid(row=1, column=0, columnspan=3)
+        self.info.configure(text=f"{self.track.duration} s | " + \
+                            f"{self.track.channels} Chs | " + \
+                            f"{self.track.bytes_per_sample * 8} bits | " + \
+                            f"{self.track.sample_rate} Hz")
+        self.var_duration = tk.DoubleVar(self, value=0.0)
+        self.time_cur = ctk.CTkLabel(self, text=DurationFormatter.apply(0.0), **style('audio_ctrl_info'))
+        self.time_cur.grid(row=2, column=0, sticky='w', **style('audio_ctrl_operation_grid'))
+        self.time_end = ctk.CTkLabel(self, text=DurationFormatter.apply(self.track.duration), **style('audio_ctrl_info'))
+        self.time_end.grid(row=2, column=2, sticky='e', **style('audio_ctrl_operation_grid'))
+        self.slider = ctk.CTkSlider(self, from_=0.0, to=self.track.duration, command=self._slider_action, variable=self.var_duration)
+        self.slider.grid(row=3, column=0, columnspan=3, sticky='ew', **style('audio_ctrl_operation_grid'))
+        self.btn_play = ctk.CTkButton(self, text='播放', command=self._btn_play_action)
+        self.btn_play.grid(row=4, column=1, **style('audio_ctrl_operation_grid'))
+        self.btn_play_is_playing_cache = False
+        self.after_id = None
+        self.grid_columnconfigure((0, 1, 2), weight=1)
+
+    def _slider_action(self, value:float):
+        self.time_cur.configure(text=DurationFormatter.apply(value))
+        flag = self.track.is_playing()
+        self.push_status(False)
+        self.push_status(flag)
+
+    def _btn_play_action(self):
+        self.push_status(not self.track.is_playing())
+
+    def pull_status(self):
+        # Sync duration
+        new_duration = self.track.get_playing_duration()
+        self.var_duration.set(new_duration)
+        self.time_cur.configure(text=DurationFormatter.apply(min(new_duration, self.track.duration)))
+        # Sync playing status
+        self.push_status(self.track.is_playing())
+        # Register the next run
+        if self.after_id is not None:
+            self.after_id = self.after(1, self.pull_status)
+
+    def push_status(self, status:bool):
+        if status != self.btn_play_is_playing_cache:
+            self.btn_play_is_playing_cache = status
+            if status:
+                # Switch to playing mode
+                # Reset duration to zero if previous playing has completed
+                if self.var_duration.get() >= self.track.duration:
+                    self.var_duration.set(0.0)
+                # Reload track and start to play
+                AudioComposer.load(self.track)
+                self.track.play(self.var_duration.get())
+                # Enable scheduled refreshing task
+                self.after_id = self.after(1, self.pull_status)
+                # Toggle button status
+                self.btn_play.configure(text='暂停')
+            else:
+                # Switch to paused mode
+                # Disable scheduled refreshing task
+                if self.after_id:
+                    self.after_cancel(self.after_id)
+                    self.after_id = None
+                # Stop playing
+                self.track.stop()
+                # Toggle button status
+                self.btn_play.configure(text='播放')
+
+    def dispose(self):
+        self.push_status(False)
+        self.track.dispose()
+
+
+class AudioPreviewer(ctk.CTkFrame, HidableGridWidget):
+    def __init__(self, master:ctk.CTkFrame, grid_row:int, grid_column:int, empty_tip:str=""):
+        ctk.CTkFrame.__init__(self, master, fg_color='transparent')
+        HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=True, sticky='nsew')
+        self.info = ctk.CTkLabel(self, anchor='center')
+        self.info.grid(row=0, column=0, sticky='ew')
+        self.controllers:"list[AudioController]" = []
+        self.grid_columnconfigure((0), weight=1)
+        self._empty_tip = empty_tip
+        self.show(None)
+
+    def show(self, value:"dict[str,bytes]|None"):
+        if isinstance(value, dict):
+            # Clear previous audios
+            for i in self.controllers:
+                i.dispose()
+                i.set_visible(False)
+            self.controllers.clear()
+            # Add current audios
+            for i, (k, v) in enumerate(value.items()):
+                self.controllers.append(AudioController(self, i + 1, 0, k, v))
+            self.info.configure(text="")
+        else:
+            self.info.configure(text=self._empty_tip)

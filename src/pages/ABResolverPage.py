@@ -174,7 +174,8 @@ class _InspectorPanel(ctk.CTkTabview):
         self.tab3.grid_columnconfigure((0), weight=1)
         # Tab 4 >>>>> Audio
         self.tab4 = self.add(self.tab_names[3])
-        self.temp = uic.ImagePreviewer(self.tab4, 0, 0, "WIP：音频预览是正在开发的特性")
+        self.audio_area = uic.AudioPreviewer(self.tab4, 0, 0, "无可解码的音频")
+        self.tab4.grid_columnconfigure((0), weight=1)
 
     def inspect(self, obj:abh.ObjectInfo):
         self.info_name.show(obj.name)
@@ -191,6 +192,7 @@ class _InspectorPanel(ctk.CTkTabview):
         self.image_area.show(obj.image)
         if audio:
             self.set(self.tab_names[3])
+        self.audio_area.show(obj.audio)
         if not any((script, image, audio)):
             self.set(self.tab_names[0])
 

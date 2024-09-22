@@ -6,9 +6,23 @@ from contextlib import ContextDecorator
 from collections import defaultdict
 
 
+class DurationFormatter:
+    @staticmethod
+    def apply(sec:"int|float"):
+        if not isinstance(sec, (int, float)):
+            raise TypeError("Argument sec should be int or float")
+        h = int(sec / 3600)
+        m = int(sec % 3600 / 60)
+        s = int(sec % 60)
+        ms = round((sec - int(sec)) * 1000) if isinstance(sec, float) else None
+        if h != 0:
+            return f'{h}:{m:02}:{s:02}' + f'.{ms:03}' if isinstance(sec, float) else ''
+        return f'{m:02}:{s:02}' + f'.{ms:03}' if isinstance(sec, float) else ''
+
+
 class TestRT(ContextDecorator):
     """Utility class for testing the running time of a code block. Usage is shown below.
-    
+
     ```
     with TestRT('scope'):
         pass # The codes to test

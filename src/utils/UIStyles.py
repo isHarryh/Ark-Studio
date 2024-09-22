@@ -208,6 +208,13 @@ class _StyleHub:
                               'sticky': 'ew'},
         # Treeview
         'treeview_empty_tip': {'font': FONT_L},
+        # Audio Controller
+        'audio_ctrl_name': {'font': FONT_M,
+                            'anchor': 'center'},
+        'audio_ctrl_info': {'font': FONT_S,
+                            'anchor': 'center'},
+        'audio_ctrl_operation_grid': {'padx': 10,
+                                      'pady': (0, 5)},
     }
 
 class _IconHub:
