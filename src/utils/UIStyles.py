@@ -171,8 +171,7 @@ class _StyleHub:
                                   'border_color': (THEME[5], THEME[5]),
                                   'border_width': 1},
         'operation_button_grid': {'padx': (5, 10),
-                                  'pady': (5, 10),
-                                  },
+                                  'pady': (5, 10)},
         # Label
         'info_label_head': {'font': FONT_MB,
                             'corner_radius': 10,
@@ -204,8 +203,7 @@ class _StyleHub:
                                    'pady': 0,
                                    'sticky': 'ne'},
         'progress_bar_grid': {'padx': 10,
-                              'pady': 5,
-                              'sticky': 'ew'},
+                              'pady': 5},
         # Treeview
         'treeview_empty_tip': {'font': FONT_L},
         # Audio Controller
@@ -235,6 +233,8 @@ class _IconHub:
         'file_open': _DefImage('assets/icons_ui/i_paste.png', 18, repaint=_StyleHub.THEME[0]),
         'file_reload': _DefImage('assets/icons_ui/i_synchronization.png', 18, repaint=_StyleHub.THEME[7]),
         'file_extract': _DefImage('assets/icons_ui/i_upload.png', 18, repaint=_StyleHub.THEME[0]),
+        'audio_play': _DefImage('assets/icons_ui/i_play.png', 14, repaint=_StyleHub.THEME[0]),
+        'audio_pause': _DefImage('assets/icons_ui/i_pause.png', 14, repaint=_StyleHub.THEME[0]),
     }
 
 class _FileIconHub:
