@@ -44,6 +44,12 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.inspector.inspect(info)
         self.operation.inspect(info)
 
+    def invoke_inspect_alt(self, info:ac.FileInfoBase):
+        self.inspector.inspect(info)
+        self.operation.inspect(info)
+        if self.operation.btn_view.is_visible():
+            self.operation.btn_view.invoke()
+
     def invoke_view_file(self, path:str):
         self.app.p_ar.cur_path = path
         self.app.p_ar.abstract.cmd_reload()
@@ -179,6 +185,7 @@ class _ExplorerPanel(ctk.CTkFrame):
         self.treeview.set_parent_extractor(lambda x:x.parent if x.parent and x.parent.name else None)
         self.treeview.set_children_extractor(lambda x:self.children_map.get(x, None))
         self.treeview.set_on_item_selected(self.master.invoke_inspect)
+        self.treeview.set_on_item_double_click(self.master.invoke_inspect_alt)
         self.treeview.set_insert_order(lambda x:sorted(x, key=lambda y:(not isinstance(y, ac.DirFileInfo), y.name)))
         self.grid_rowconfigure((0), weight=0)
         self.grid_rowconfigure((1), weight=1)

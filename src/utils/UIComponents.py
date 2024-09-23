@@ -41,6 +41,11 @@ class HidableGridWidget(tk.Grid):
             self.grid(**self.__grid_kwargs)
         else:
             self.grid_remove()
+        self.__visible = value
+
+    def is_visible(self):
+        """Gets the visibility of the widget."""
+        return self.__visible
 
 ##########################
 # Frequent Used Controls #
@@ -161,6 +166,7 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         self._parent_of:"Callable[[_ITEM_TYPE],_ITEM_TYPE]" = lambda _:None
         self._children_of:"Callable[[_ITEM_TYPE],list[_ITEM_TYPE]]" = lambda _:None
         self._on_item_selected:"Callable[[_ITEM_TYPE],None]" = lambda _:None
+        self._on_item_double_click:"Callable[[_ITEM_TYPE],None]" = lambda _:None
         self._insert_sorter:"Callable[[list[_ITEM_TYPE]],list[_ITEM_TYPE]]" = lambda x:x
         # Runtime variables
         self.treeview:ttk.Treeview = None
@@ -212,6 +218,10 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         """Sets a callback that will be called when an item is selected."""
         self._on_item_selected = consumer
 
+    def set_on_item_double_click(self, consumer:"Callable[[_ITEM_TYPE],None]"):
+        """Sets a callback that will be called when an item has been double clicked."""
+        self._on_item_double_click = consumer
+
     def set_insert_order(self, sorter:"Callable[[list[_ITEM_TYPE]],list[_ITEM_TYPE]]"):
         """Sets a sorter that sorts the item list to be inserted."""
         self._insert_sorter = sorter
@@ -227,9 +237,10 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         self.treeview.grid(row=0, column=0, padx=(5, 0), pady=(0, 5), sticky='nsew')
         self.treeview.tag_bind('general_tag', '<<TreeviewOpen>>', self._item_opened)
         self.treeview.tag_bind('general_tag', '<<TreeviewSelect>>', self._item_selected)
+        self.treeview.bind('<Double-1>', self._item_double_click)
         # Scroll bar reset
-        self._scroll_bar = ttk.Scrollbar(self, orient='vertical', command=self.treeview.yview)
-        self._scroll_bar.grid(row=0, column=1, padx=(0, 5), pady=(0, 5), sticky='ns')
+        self._scroll_bar = ctk.CTkScrollbar(self, orientation='vertical', command=self.treeview.yview)
+        self._scroll_bar.grid(row=0, column=1, sticky='ns')
         self.treeview.configure(yscrollcommand=self._scroll_bar.set)
         # IID map reset
         self.iid2item = BiMap()
@@ -306,6 +317,10 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
     def _item_selected(self, _:tk.Event):
         iid = self.treeview.selection()[0]
         self._on_item_selected(self.iid2item.get_value(iid))
+
+    def _item_double_click(self, event:tk.Event):
+        iid = self.treeview.identify('item', event.x, event.y)
+        self._on_item_double_click(self.iid2item.get_value(iid))
 
 
 class TextPreviewer(ctk.CTkFrame, HidableGridWidget):
