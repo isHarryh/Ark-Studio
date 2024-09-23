@@ -9,7 +9,7 @@ from typing import Callable, Any, TypeVar, Generic
 
 from .UIStyles import style, icon
 from .UIConcurrent import GUITaskBase
-from ..utils.AnalyUtils import DurationFormatter
+from ..utils.AnalyUtils import TestRT, DurationFormatter
 from ..utils.BiMap import BiMap
 from .AudioComposer import AudioComposer, AudioTrack
 
@@ -338,12 +338,12 @@ class TextPreviewer(ctk.CTkFrame, HidableGridWidget):
         self.show(None)
 
     def show(self, value:"bytes|None"):
-        # TODO Perf of large text (>5MB)
         self.display.configure(state='normal')
         self.display.delete(TextPreviewer._START, TextPreviewer._END)
         if value:
-            decoded = value.decode(errors='replace')
-            self.display.insert(TextPreviewer._START, decoded)
+            with TestRT('preview_text'):
+                decoded = value.decode(errors='replace') if len(value) <= 10 << 20 else "该内容的数据量较大，已关闭预览"
+                self.display.insert(TextPreviewer._START, decoded)
         else:
             self.display.insert(TextPreviewer._START, self._empty_tip)
         self.display.configure(state='disabled')
@@ -351,6 +351,7 @@ class TextPreviewer(ctk.CTkFrame, HidableGridWidget):
 
 class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
     _FILL = 0.66667
+    _LIMIT_SIZE = 1024
 
     def __init__(self, master:ctk.CTkFrame, grid_row:int, grid_column:int, empty_tip:str=""):
         ctk.CTkFrame.__init__(self, master, fg_color='transparent')
@@ -364,6 +365,7 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
         self.grid_columnconfigure((0), weight=1)
         master.bind('<Configure>', self._on_resize)
         self._empty_tip = empty_tip
+        self._empty_tk_image = ctk.CTkImage(Image.new('RGBA', (1, 1)))
         self._tk_image = None
         self._size_request = (self.display.winfo_width(), self.display.winfo_height())
         self._size_current = (-1, -1)
@@ -371,21 +373,25 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
         self.show(None)
 
     def show(self, value:"Image.Image|None"):
-        # TODO Pref of large image (>2000px*2000px)
         if value:
-            self._tk_image = ctk.CTkImage(value, size=value.size)
-            self._size_current = value.size
-            self._aspect_ratio = value.width / value.height
-            self.display.configure(text="")
-            self.info.configure(text=f"{value.width} * {value.height}")
+            with TestRT('preview_image'):
+                self.info.configure(text=f"{value.width} * {value.height}")
+                # Limit raw image size
+                if (scale := max(map(lambda x:ImagePreviewer._LIMIT_SIZE / x, value.size))) < 1:
+                    value = value.resize(tuple(map(lambda x:int(x * scale), value.size)), resample=Image.BILINEAR)
+                # Replace displaying image
+                self._tk_image = ctk.CTkImage(value, size=value.size)
+                self._size_current = value.size
+                self._aspect_ratio = value.width / value.height
+                self.display.configure(text="", image=self._tk_image)
+                self._fit()
         else:
-            self._tk_image = ctk.CTkImage(Image.new('RGBA', (1, 1)))
+            self.info.configure(text="")
+            self._tk_image = self._empty_tk_image
             self._size_current = (1, 1)
             self._aspect_ratio = 1.0
-            self.display.configure(text=self._empty_tip)
-            self.info.configure(text="")
-        self.display.configure(image=self._tk_image)
-        self._fit()
+            self.display.configure(text=self._empty_tip, image=self._tk_image)
+            self._fit()
 
     def _fit(self):
         if self._tk_image and self._size_request != self._size_current:
@@ -395,7 +401,7 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
                 w = h * self._aspect_ratio
             else:
                 h = w / self._aspect_ratio
-            size_real = (int(w * ImagePreviewer._FILL), int(h * ImagePreviewer._FILL))
+            size_real = tuple(map(lambda x:max(1, int(x * ImagePreviewer._FILL)), (w, h)))
             self._tk_image.configure(size=size_real)
             self._size_current = self._size_request
 
@@ -449,7 +455,7 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
         self.push_status(self.track.is_playing())
         # Register the next run
         if self.after_id is not None:
-            self.after_id = self.after(1, self.pull_status)
+            self.after_id = self.after(5, self.pull_status)
 
     def push_status(self, status:bool):
         if status != self.btn_play_is_playing_cache:
@@ -463,7 +469,7 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
                 AudioComposer.load(self.track)
                 self.track.play(self.var_duration.get())
                 # Enable scheduled refreshing task
-                self.after_id = self.after(1, self.pull_status)
+                self.after_id = self.after(5, self.pull_status)
                 # Toggle button status
                 self.btn_play.configure(text='暂停', image=icon('audio_pause'))
             else:
@@ -500,9 +506,10 @@ class AudioPreviewer(ctk.CTkFrame, HidableGridWidget):
             i.set_visible(False)
         self.controllers.clear()
         if isinstance(value, dict):
-            # Add current audios
-            for i, (k, v) in enumerate(value.items()):
-                self.controllers.append(AudioController(self, i + 1, 0, k, v))
-            self.info.configure(text="")
+            with TestRT('preview_audio'):
+                # Add current audios
+                for i, (k, v) in enumerate(value.items()):
+                    self.controllers.append(AudioController(self, i + 1, 0, k, v))
+                self.info.configure(text="")
         else:
             self.info.configure(text=self._empty_tip)
