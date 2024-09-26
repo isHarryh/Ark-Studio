@@ -3,7 +3,7 @@
 
 <!--suppress HtmlDeprecatedAttribute -->
 <div align="center" style="text-align:center">
-   <h1> Ark-Unpacker </h1>
+   <h1> Ark-Studio </h1>
    <p>
       Arknights Assets Studio | 明日方舟游戏资源集成式管理平台 <br>
       <code><b> WIP </b></code>
@@ -31,13 +31,14 @@
     - [x] 浏览本地资源库
     - [x] 比较并显示本地资源库和官方资源库的差异
     - [ ] 从官方资源库下载或同步文件到本地
+    - [ ] 多线程下载与解压
     - [ ] 按关键词搜索指定的文件
     - [ ] 切换到指定的资源库版本
 2. **AB 文件解包**
     - [x] 浏览 AB 文件的对象列表
     - [x] 预览文本和二进制文件
     - [x] 预览图片文件
-    - [ ] 预览音频文件
+    - [x] 预览音频文件
     - [ ] 区分显示不可提取对象和可提取对象
     - [ ] 提取和批量提取资源文件到本地
     - [ ] 按关键词或类型搜索指定的对象
@@ -60,6 +61,13 @@
 | Texture2D | 二维纹理图 | PNG图片 |
 | AudioClip | 音频剪辑 | WAV音频 |
 | TextAsset | 文本或字节数据 | 未指定 |
+
+#### 效果预览图
+<table style="margin-left: auto; margin-right: auto;">
+    <tr>
+        <td> <img alt="demo1" width="250" src="https://raw.githubusercontent.com/isHarryh/Ark-Studio/main/docs/imgs/demo_dev_1.jpg"> </td>
+    </tr>
+</table>
 
 ## 注意事项 <sub>Notice</sub>
 用户应当在合理的范围内使用本项目。严禁将本项目的软件所提取的游戏资源内容用于商业用途或损害版权方（上海鹰角网络有限公司）的相关利益。
