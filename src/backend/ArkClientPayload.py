@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2022-2024, Harry Huang
 # @ BSD 3-Clause License
-import os, re, json, requests, hashlib, zipfile
-from io import BytesIO
+import os, re, json, hashlib
 from functools import total_ordering
 from collections import defaultdict
 
@@ -341,10 +340,6 @@ class ArkRemoteFileInfo(FileInfoBase):
         self._type:str = info_dict.get('type', None)
         self._pack:str = info_dict.get('pid', None)
         # Unused self._cid:int = info_dict.get('cid') # Required
-        self._nc:ArkNetworkConfig = None
-        self._dv:str = None
-        self._vs:ArkVersion = None
-        self._rp:ArkRemoteAssetsRepo = None
 
     @property
     def name(self):
@@ -374,30 +369,14 @@ class ArkRemoteFileInfo(FileInfoBase):
     def pack(self):
         return self._pack
 
-    def bind(self, network_config:ArkNetworkConfig, device:str, version:ArkVersion, repo:ArkRemoteAssetsRepo):
-        self._nc:ArkNetworkConfig = network_config
-        self._dv:str = device
-        self._vs:ArkVersion = version
-        self._rp:ArkRemoteAssetsRepo = repo
-
-    def data_url(self):
-        if not (self._nc and self._dv and self._vs and self._rp):
-            raise RuntimeError("Bindings required")
+    @property
+    def data_name(self):
         d_name = self._name.replace('/', '_').replace('#', '__')
         ext_matches = list(re.finditer(r'\..+', d_name))
         if ext_matches:
             start, end = ext_matches[-1].span()
             d_name = f'{d_name[:start]}.dat{d_name[end:]}'
-        return f"{self._nc.get('hu')}/{self._dv}/assets/{self._vs.res}/{d_name}"
-
-    def download(self, root_dir:str):
-        r = requests.get(self.data_url(), timeout=CONN_TIMEOUT)
-        if r.status_code != 200:
-            raise requests.HTTPError(r.status_code)
-        z = zipfile.ZipFile(BytesIO(r.content))
-        if len(z.infolist()) != 1:
-            raise RuntimeError("Unexpected entry length")
-        z.extractall(root_dir)
+        return d_name
 
 class ArkPackInfo:
     def __init__(self, info_dict:dict):
@@ -515,22 +494,3 @@ class ArkIntegratedFileInfo(FileInfoBase):
                 return FileStatus.MODIFY if s_remote else FileStatus.DELETE
         else:
             return FileStatus.ADD if s_remote else FileStatus.DELETED
-
-if __name__ == '__main__':
-    config = ArkNetworkConfig(requests.get(ArkNetworkConfig.SOURCE, timeout=9).json())
-    version = ArkVersion(requests.get(config.api_version(), timeout=9).json())
-    repo = ArkRemoteAssetsRepo(requests.get(f"{config.api_assets(version.res)}/hot_update_list.json", timeout=9).json())
-    local = ArkLocalAssetsRepo('download')
-    inter = ArkIntegratedAssetRepo(local, repo)
-    print("Processing...")
-    stats = [0,0,0,0,0,0,0]
-    for i in inter.infos:
-        stats[i.status] += 1
-        if i.status == FileStatus.ADD or i.status == FileStatus.MODIFY:
-            print(f"↓\t{i.name}")
-            i.remote.bind(config, 'Android', version, repo)
-            # i.remote.download('download')
-        elif i.status == FileStatus.DELETE:
-            print(f"×\t{i.name}")
-            # i.local.delete()
-    print(f"+{stats[1]} ·{stats[3]} ×{stats[5]}\n")
