@@ -5,7 +5,7 @@ import os
 import tkinter.filedialog as fd
 import customtkinter as ctk
 
-from src.backend import ArkClient as ac
+from src.backend import ArkClientPayload as acp
 from src.backend import ABHandler as abh
 from src.utils import UIComponents as uic
 from src.utils.UIStyles import file_icon, icon, style
@@ -132,7 +132,7 @@ class _ExplorerPanel(ctk.CTkFrame):
         super().__init__(master)
         self.title = ctk.CTkLabel(self, text="对象浏览器", image=icon('explorer'), **style('panel_title'))
         self.title.grid(row=0, column=0, **style('panel_title_grid'))
-        self.children_map:"dict[ac.FileInfoBase,set[abh.ObjectInfo]]" = None
+        self.children_map:"dict[acp.FileInfoBase,set[abh.ObjectInfo]]" = None
         self.treeview:"uic.TreeviewFrame[abh.ObjectInfo]" = uic.TreeviewFrame(self, 1, 0, columns=3, tree_mode=False, empty_tip="列表为空")
         self.treeview.set_column(0, 350, "对象名称")
         self.treeview.set_column(1, 100, "类型")
