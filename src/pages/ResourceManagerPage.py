@@ -2,10 +2,10 @@
 # Copyright (c) 2022-2024, Harry Huang
 # @ BSD 3-Clause License
 import os
-import requests
 import tkinter.filedialog as fd
 import customtkinter as ctk
 
+from src.backend import ArkClient as ac
 from src.backend import ArkClientPayload as acp
 from src.utils import UIComponents as uic
 from src.utils.AnalyUtils import TestRT
@@ -34,6 +34,7 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.operation.grid(row=2, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
 
         self.local_root = Config.get('local_repo_root')
+        self.client = ac.ArkClient()
         self.repo = None
         if not self.local_root or not os.path.isdir(self.local_root):
             self.local_root = None
@@ -89,11 +90,11 @@ class _ResourceSwitchLatestTask(GUITaskBase):
         self._manager.abstract.set_loading(True)
         if isinstance(self._manager.repo, (acp.ArkIntegratedAssetRepo, acp.ArkLocalAssetsRepo)):
             self.update(0.1, "正在获取网路配置")
-            config = acp.ArkNetworkConfig(requests.get(acp.ArkNetworkConfig.SOURCE, timeout=9).json())
+            self._manager.client.set_current_network_config()
             self.update(0.3, "正在查询最新版本")
-            version = acp.ArkVersion(requests.get(config.api_version(), timeout=9).json())
+            self._manager.client.set_current_version()
             self.update(0.5, "正在获取资源列表")
-            remote = acp.ArkRemoteAssetsRepo(requests.get(f"{config.api_assets(version.res)}/hot_update_list.json", timeout=9).json())
+            remote = self._manager.client.get_repo()
             self.update(0.8, "正在加载浏览视图")
             if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo):
                 self._manager.repo = acp.ArkIntegratedAssetRepo(self._manager.repo.local, remote)
@@ -199,6 +200,7 @@ class _ExplorerPanel(ctk.CTkFrame):
             if repo is not None:
                 self.children_map = self.master.repo.get_children_map()
                 self.treeview.insert(list(self.children_map[acp.DirFileInfo('')]))
+
 
 class _InspectorPanel(ctk.CTkFrame):
     master:ResourceManagerPage
