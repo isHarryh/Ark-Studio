@@ -137,6 +137,7 @@ class ProgressBarGroup(ctk.CTkFrame, HidableGridWidget):
 
     def bind_task(self, task:GUITaskBase):
         """Binds the progress bar to a task."""
+        self.set_head_text(task.title)
         self._prog.configure(variable=task.observable_progress)
         self._body.configure(textvariable=task.observable_message)
 
@@ -305,6 +306,7 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         self._sort_reverse = not self._sort_reverse
 
     def _item_opened(self, _:tk.Event):
+        self.treeview.configure(cursor='watch')
         iid = self.treeview.selection()[0]
         item = self.iid2item.get_value(iid)
         # Clear the current descendants of this item
@@ -313,14 +315,19 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         children = self._children_of(item)
         if children:
             self.insert(children)
+        self.treeview.configure(cursor='arrow')
 
     def _item_selected(self, _:tk.Event):
+        self.treeview.configure(cursor='watch')
         iid = self.treeview.selection()[0]
         self._on_item_selected(self.iid2item.get_value(iid))
+        self.treeview.configure(cursor='arrow')
 
     def _item_double_click(self, event:tk.Event):
+        self.treeview.configure(cursor='watch')
         iid = self.treeview.identify('item', event.x, event.y)
         self._on_item_double_click(self.iid2item.get_value(iid))
+        self.treeview.configure(cursor='arrow')
 
 
 class TextPreviewer(ctk.CTkFrame, HidableGridWidget):

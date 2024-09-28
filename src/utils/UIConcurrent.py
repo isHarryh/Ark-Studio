@@ -12,7 +12,8 @@ class GUITaskBase():
     DEFAULT_SUCCESS_MESSAGE = "完成"
     DEFAULT_FAILURE_MESSAGE = "失败"
 
-    def __init__(self):
+    def __init__(self, title:str=""):
+        self._title = title
         self._completed = False
         self._cancelled = False
         self._running = False
@@ -95,6 +96,11 @@ class GUITaskBase():
     def get_exception(self):
         """Returns the exception that cause the failure, or `None` if no exception occurred."""
         return self._exception
+
+    @property
+    def title(self):
+        """The title of the task."""
+        return self._title
 
     @property
     def observable_progress(self):

@@ -63,7 +63,7 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
 
 class _ResourceReloadTask(GUITaskBase):
     def __init__(self, manager:ResourceManagerPage):
-        super().__init__()
+        super().__init__("正在重载本地资源库...")
         self._manager = manager
 
     def _run(self):
@@ -83,7 +83,7 @@ class _ResourceReloadTask(GUITaskBase):
 
 class _ResourceSwitchLatestTask(GUITaskBase):
     def __init__(self, manager:ResourceManagerPage):
-        super().__init__()
+        super().__init__("正在切换到最新版本...")
         self._manager = manager
 
     def _run(self):
@@ -157,13 +157,11 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_reload(self):
         task = _ResourceReloadTask(self.master)
-        self.progress.set_head_text("正在重载本地资源库...")
         self.progress.bind_task(task)
         task.start()
 
     def cmd_switch_latest(self):
         task = _ResourceSwitchLatestTask(self.master)
-        self.progress.set_head_text("正在切换到最新版本...")
         self.progress.bind_task(task)
         task.start()
 

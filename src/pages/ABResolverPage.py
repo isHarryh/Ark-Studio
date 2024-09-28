@@ -43,7 +43,7 @@ class ABResolverPage(ctk.CTkFrame, uic.HidableGridWidget):
 
 class _FileReloadTask(GUITaskBase):
     def __init__(self, manager:ABResolverPage):
-        super().__init__()
+        super().__init__("正在读取对象列表...")
         self._manager = manager
 
     def _run(self):
@@ -62,7 +62,7 @@ class _FileReloadTask(GUITaskBase):
 
 class _FileExtractTask(GUITaskBase):
     def __init__(self, manager:ABResolverPage):
-        super().__init__()
+        super().__init__("正在提取全部对象...")
         self._manager = manager
 
     def _run(self):
@@ -114,13 +114,11 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_reload(self):
         task = _FileReloadTask(self.master)
-        self.progress.set_head_text("正在读取对象列表...")
         self.progress.bind_task(task)
         task.start()
 
     def cmd_extract_all(self):
         task = _FileExtractTask(self.master)
-        self.progress.set_head_text("正在提取全部对象...")
         self.progress.bind_task(task)
         task.start()
 
