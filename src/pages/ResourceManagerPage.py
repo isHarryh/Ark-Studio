@@ -109,6 +109,47 @@ class _ResourceSwitchLatestTask(GUITaskBase):
         self._manager.abstract.show_repo_res_version(self._manager.repo)
 
 
+class _ResourceSyncAllFileTask(GUITaskBase):
+    def __init__(self, manager:ResourceManagerPage):
+        super().__init__("正在同步文件...")
+        self._manager = manager
+
+    def _run(self):
+        self._manager.abstract.set_loading(True)
+        if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo):
+            STEP1_WEIGHT = 0.2
+            STEP2_WEIGHT = 0.8
+            # Step1
+            self.update(0.0, "正在初始化...")
+            NEED_DELETE = (acp.FileStatus.DELETE,)
+            NEED_DOWNLOAD = (acp.FileStatus.ADD, acp.FileStatus.MODIFY)
+            NEED_SYNC = NEED_DELETE + NEED_DOWNLOAD
+            infos = self._manager.repo.infos
+            infos_len = len(infos)
+            filtered_infos = []
+            for i, info in enumerate(infos):
+                self.update(STEP1_WEIGHT * i / infos_len, f"正在计算变更 {i / infos_len:.1%}")
+                if info.status in NEED_SYNC:
+                    filtered_infos.append(info)
+            # Step2
+            filtered_infos_len = len(filtered_infos)
+            for i, info in enumerate(filtered_infos):
+                self.update(STEP1_WEIGHT + STEP2_WEIGHT * i / filtered_infos_len, f"已完成 {i}/{filtered_infos_len}")
+                if info.status in NEED_DELETE:
+                    print('D', info)
+                    FileSystem.rm(info.local.path)
+                elif info.status in NEED_DOWNLOAD:
+                    print(info)
+                    d = self._manager.client.get_asset(info.remote.data_name, unzip=True)
+                    FileSystem.mkdir_for(info.local.path)
+                    with open(info.local.path, 'wb') as f:
+                        f.write(d)
+
+    def _on_complete(self):
+        self._manager.abstract.set_loading(False)
+        self._manager.abstract.cmd_switch_latest()
+
+
 class _AbstractPanel(ctk.CTkFrame):
     master:ResourceManagerPage
 
@@ -128,7 +169,8 @@ class _AbstractPanel(ctk.CTkFrame):
                                                      command=self.cmd_switch_latest)
         self.btn_switch_manual = uic.OperationButton(self, 2, 2, "WIP：切换其他版本", icon('switch_manual'),
                                                      **style('operation_button_info'))
-        self.btn_sync = uic.OperationButton(self, 1, 3, "WIP：同步所有变更", icon('repo_sync'))
+        self.btn_sync = uic.OperationButton(self, 1, 3, "同步所有变更", icon('repo_sync'),
+                                            command=self.cmd_sync_all_file)
         self.progress = uic.ProgressBarGroup(self, 0, 0, grid_columnspan=1, init_visible=False)
         self.btn_list = (self.btn_open, self.btn_reload, self.btn_switch_latest, self.btn_switch_manual, self.btn_sync)
         self.grid_columnconfigure((0), weight=1)
@@ -163,6 +205,11 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_switch_latest(self):
         task = _ResourceSwitchLatestTask(self.master)
+        self.progress.bind_task(task)
+        task.start()
+
+    def cmd_sync_all_file(self):
+        task = _ResourceSyncAllFileTask(self.master)
         self.progress.bind_task(task)
         task.start()
 
