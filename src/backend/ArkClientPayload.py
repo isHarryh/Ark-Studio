@@ -468,8 +468,7 @@ class ArkIntegratedFileInfo(FileInfoBase):
 
     @property
     def status(self):
-        if not self._status_cache:
-            self._status_cache = self._get_status()
+        self._status_cache = self.get_status()
         return self._status_cache
 
     @property
@@ -484,12 +483,13 @@ class ArkIntegratedFileInfo(FileInfoBase):
     def remote(self):
         return self._remote
 
-    def _get_status(self):
+    def get_status(self):
         s_local = self._local.file_size
         s_remote = self._remote.file_size if self._remote else 0
         if s_local:
             if s_local == s_remote and self._local.md5 == self._remote.md5:
-                return FileStatus.MODIFIED if self._status_cache == FileStatus.MODIFY else FileStatus.OKAY
+                return FileStatus.MODIFIED if self._status_cache in (FileStatus.MODIFY, FileStatus.MODIFIED) else \
+                    FileStatus.ADDED if self._status_cache in (FileStatus.ADD, FileStatus.ADDED) else FileStatus.OKAY
             else:
                 return FileStatus.MODIFY if s_remote else FileStatus.DELETE
         else:

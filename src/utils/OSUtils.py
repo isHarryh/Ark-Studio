@@ -3,12 +3,34 @@
 # @ BSD 3-Clause License
 import os
 import platform
+import shutil
 import subprocess
 
 
-class UserFileSeeing:
+class FileSystem:
     @staticmethod
-    def see_file(path):
+    def rm(path:str):
+        """**DANGEROUS**: Deletes a file or a directory."""
+        if os.path.isfile(path):
+            os.unlink(path)
+        elif os.path.isdir(path):
+            if path.strip().rstrip() in ['', '/', '\\']:
+                raise OSError("Dangerous action")
+            shutil.rmtree(path, ignore_errors=True)
+
+    @staticmethod
+    def mkdir(dirpath:str):
+        """Makes a directory."""
+        os.makedirs(dirpath, exist_ok=True)
+
+    @staticmethod
+    def mkdir_for(filepath:str):
+        """Makes the parent directory of the given file."""
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+    @staticmethod
+    def see_file(path:str):
+        """Uses the platform explorer to see the file."""
         if not os.path.exists(path):
             raise FileNotFoundError(f"The specified path does not exist: {path}")
 

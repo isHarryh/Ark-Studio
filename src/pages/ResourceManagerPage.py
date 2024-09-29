@@ -10,7 +10,7 @@ from src.backend import ArkClientPayload as acp
 from src.utils import UIComponents as uic
 from src.utils.AnalyUtils import TestRT
 from src.utils.Config import Config
-from src.utils.OSUtils import UserFileSeeing
+from src.utils.OSUtils import FileSystem
 from src.utils.UIStyles import file_icon, icon, style
 from src.utils.UIConcurrent import GUITaskBase
 from .ArkStudioAppInterface import App
@@ -44,6 +44,7 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
     def invoke_inspect(self, info:acp.FileInfoBase):
         self.inspector.inspect(info)
         self.operation.inspect(info)
+        self.explorer.treeview.refresh([info])
 
     def invoke_inspect_alt(self, info:acp.FileInfoBase):
         self.inspector.inspect(info)
@@ -217,14 +218,14 @@ class _InspectorPanel(ctk.CTkFrame):
         self.grid_columnconfigure((0), weight=1)
 
     def inspect(self, info:acp.FileInfoBase):
-        self.info_name.set_body_text(info.basename, "<空>")
+        self.info_name.show(info.basename, "<空>")
         self.info_location.show(info.parent.name, "<根>")
         if isinstance(info, acp.ArkIntegratedFileInfo):
             self.info_status.show(acp.FileStatus.to_str(info.status), "<未知>")
             self.info_size_local.show(f"{info.local.file_size} B", "0 B")
-            self.info_size_remote.show(f"{info.remote.file_size} B", "0 B")
+            self.info_size_remote.show(f"{info.remote.file_size if info.remote else 0} B", "0 B")
             self.info_digest_local.show(info.local.md5, "<未知>")
-            self.info_digest_remote.show(info.remote.md5, "<未知>")
+            self.info_digest_remote.show(info.remote.md5 if info.remote else "", "<未知>")
         elif isinstance(info, acp.ArkLocalFileInfo):
             self.info_status.show("尚未检查更新")
             self.info_size_local.show(f"{info.file_size} B", "0 B")
@@ -248,7 +249,7 @@ class _OperationPanel(ctk.CTkFrame):
         self.title.grid(row=0, column=0, **style('panel_title_grid'))
         self.btn_view = uic.OperationButton(self, 1, 0, "查看此文件", icon('file_view')
                                             )
-        self.btn_sync = uic.OperationButton(self, 2, 0, "WIP：同步此文件", icon('file_sync')
+        self.btn_sync = uic.OperationButton(self, 2, 0, "同步此文件", icon('file_sync')
                                                      )
         self.btn_goto = uic.OperationButton(self, 3, 0, "在文件夹中显示", icon('file_goto'),
                                               **style('operation_button_info'))
@@ -259,7 +260,7 @@ class _OperationPanel(ctk.CTkFrame):
             if not isinstance(info, acp.DirFileInfo) and \
                 info.status in (acp.FileStatus.ADD, acp.FileStatus.DELETE, acp.FileStatus.MODIFY):
                 self.btn_sync.set_visible(True)
-                self.btn_sync.set_command(lambda:None) # TODO WIP: Sync file
+                self.btn_sync.set_command(lambda:self.cmd_sync(info))
             else:
                 self.btn_sync.set_visible(False)
                 self.btn_sync.set_command(None)
@@ -267,9 +268,42 @@ class _OperationPanel(ctk.CTkFrame):
                 self.btn_view.set_visible(True)
                 self.btn_view.set_command(lambda:self.master.invoke_view_file(info.path))
                 self.btn_goto.set_visible(True)
-                self.btn_goto.set_command(lambda:UserFileSeeing.see_file(info.path))
+                self.btn_goto.set_command(lambda:FileSystem.see_file(info.path))
             else:
                 self.btn_view.set_visible(False)
                 self.btn_view.set_command(None)
                 self.btn_goto.set_visible(False)
                 self.btn_goto.set_command(None)
+
+    def cmd_sync(self, info:acp.FileInfoBase):
+        if isinstance(info, acp.ArkIntegratedFileInfo):
+            task = _ResourceSyncFileTask(self.master, info)
+            self.master.abstract.progress.bind_task(task)
+            task.start()
+
+
+class _ResourceSyncFileTask(GUITaskBase):
+    def __init__(self, manager:ResourceManagerPage, info:acp.ArkIntegratedFileInfo):
+        super().__init__("正在同步文件...")
+        self._manager = manager
+        self._info = info
+
+    def _run(self):
+        self._manager.abstract.set_loading(True)
+        if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo) and \
+            isinstance(self._info, acp.ArkIntegratedFileInfo):
+            if self._info.status == acp.FileStatus.DELETE:
+                self.update(0.2, "正在删除...")
+                FileSystem.rm(self._info.local.path)
+            elif self._info.status in [acp.FileStatus.ADD, acp.FileStatus.MODIFY]:
+                self.update(0.2, "正在下载...")
+                d = self._manager.client.get_asset(self._info.remote.data_name, unzip=True)
+                self.update(0.8, "正在写入...")
+                FileSystem.mkdir_for(self._info.local.path)
+                with open(self._info.local.path, 'wb') as f:
+                    f.write(d)
+            self.update(0.9, "正在校验...")
+            self._manager.invoke_inspect(self._info)
+
+    def _on_complete(self):
+        self._manager.abstract.set_loading(False)

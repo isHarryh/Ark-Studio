@@ -88,18 +88,18 @@ class InfoLabelGroup(ctk.CTkFrame, HidableGridWidget):
         self._head.grid(row=0, column=0, **style('info_label_head_grid'))
         self._body = ctk.CTkLabel(self, text=body_text, **style('info_label_body'))
         self._body.grid(row=0 if tight else 1, column=1 if tight else 0, **style('info_label_body_grid'))
-        self.set_body_text(body_text)
+        self._set_body_text(body_text)
 
     def show(self, value:str="", placeholder:str=""):
-        """Shows a new text, `None` for hiding this label."""
+        """Shows a new text. If value is empty, placeholder will be shown. If value is `None`, label will hide."""
         if value is None:
             self.set_visible(False)
+            self._set_body_text()
         else:
             self.set_visible(True)
-            self.set_body_text(value, placeholder)
+            self._set_body_text(value, placeholder)
 
-    def set_body_text(self, value:str="", placeholder:str=""):
-        """Sets a new body text;"""
+    def _set_body_text(self, value:str="", placeholder:str=""):
         if value:
             self._body.configure(text=value)
         else:
@@ -251,6 +251,16 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         """Inserts an item list."""
         for i in self._insert_sorter(items):
             self._insert_one(i)
+
+    def refresh(self, items:"list[_ITEM_TYPE]"):
+        """Updates the given items by refreshing their text, image and column values."""
+        for i in items:
+            self.treeview.item(
+                self.iid2item.get_key(i),
+                text=self._text_of(i),
+                image=self._icon_of(i),
+                values=self._value_of(i)
+                )
 
     def _insert_one(self, item:_ITEM_TYPE):
         if not self._inited:
