@@ -5,6 +5,7 @@ import os, re, json, hashlib
 from functools import total_ordering
 from collections import defaultdict
 
+from ..utils.Config import Config
 from ..utils.AnalyUtils import TestRT
 
 
@@ -170,6 +171,8 @@ class ArkLocalAssetsRepo(AssetRepoBase):
                     name = os.path.realpath(os.path.join(root, f))
                     name = os.path.relpath(name, self._root_dir)
                     name.replace('\\', '/')
+                    if any(re.match(p, name) for p in Config.get('local_ignore')):
+                        continue
                     infos.append(ArkLocalFileInfo(name, self._root_dir))
             return infos
 

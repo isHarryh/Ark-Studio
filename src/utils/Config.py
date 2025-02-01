@@ -36,6 +36,12 @@ class Config():
     __config_path = "ArkStudioConfig.json"
     __file_encoding = 'UTF-8'
     __default_config = {
+        'local_ignore': [
+            "^temp",
+            ".exe$",
+            ".log$",
+            ".json$"
+        ],
         'local_repo_root': None,
         'log_file': "ArkStudioLogs.log",
         'log_level': Logger.LV_INFO,
