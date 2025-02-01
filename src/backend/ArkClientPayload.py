@@ -486,11 +486,21 @@ class ArkIntegratedFileInfo(FileInfoBase):
     def get_status(self):
         s_local = self._local.file_size
         s_remote = self._remote.file_size if self._remote else 0
-        if s_local:
-            if s_local == s_remote and self._local.md5 == self._remote.md5:
-                return FileStatus.MODIFIED if self._status_cache in (FileStatus.MODIFY, FileStatus.MODIFIED) else \
-                    FileStatus.ADDED if self._status_cache in (FileStatus.ADD, FileStatus.ADDED) else FileStatus.OKAY
-            else:
-                return FileStatus.MODIFY if s_remote else FileStatus.DELETE
-        else:
+        # Ensure local file existence
+        if not s_local:
             return FileStatus.ADD if s_remote else FileStatus.DELETED
+        # Check file size consistency
+        if s_local == s_remote:
+            md5_local = self.local.md5
+            md5_remote = self.remote.md5
+            # Check MD5 consistency
+            if (
+                md5_local == md5_remote
+                or len(md5_local) != len(md5_remote)  # MD5 unavailable
+            ):
+                return (
+                    FileStatus.MODIFIED if self._status_cache in (FileStatus.MODIFY, FileStatus.MODIFIED) else
+                    FileStatus.ADDED if self._status_cache in (FileStatus.ADD, FileStatus.ADDED) else
+                    FileStatus.OKAY
+                )
+        return FileStatus.MODIFY if s_remote else FileStatus.DELETE
