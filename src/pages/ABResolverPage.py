@@ -9,7 +9,7 @@ from src.backend import ArkClientPayload as acp
 from src.backend import ABHandler as abh
 from src.utils import UIComponents as uic
 from src.utils.UIStyles import file_icon, icon, style
-from src.utils.UIConcurrent import GUITaskBase
+from src.utils.UIConcurrent import GUITaskBase, GUITaskCoordinator
 from .ArkStudioAppInterface import App
 
 
@@ -31,6 +31,10 @@ class ABResolverPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.operation.grid(row=2, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
         self.cur_ab = None
         self.cur_path = None
+
+        all_tasks = [_FileReloadTask, _FileExtractTask]
+        for i in all_tasks:
+            GUITaskCoordinator.register(i, all_tasks)
 
     def invoke_load_tree(self, ab:abh.ABHandler):
         self.cur_ab = ab

@@ -12,7 +12,7 @@ from src.utils.AnalyUtils import TestRT
 from src.utils.Config import Config
 from src.utils.OSUtils import FileSystem
 from src.utils.UIStyles import file_icon, icon, style
-from src.utils.UIConcurrent import GUITaskBase
+from src.utils.UIConcurrent import GUITaskBase, GUITaskCoordinator
 from .ArkStudioAppInterface import App
 
 
@@ -40,6 +40,15 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
             self.local_root = None
         else:
             self.abstract.cmd_reload()
+
+        all_tasks = [
+            _ResourceReloadTask,
+            _ResourceSwitchLatestTask,
+            _ResourceSyncAllFileTask,
+            _ResourceSyncFileTask
+        ]
+        for i in all_tasks:
+            GUITaskCoordinator.register(i, all_tasks)
 
     def invoke_inspect(self, info:acp.FileInfoBase):
         self.inspector.inspect(info)
