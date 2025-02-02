@@ -24,6 +24,16 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.grid_rowconfigure((0, 2), weight=0)
         self.grid_rowconfigure((1), weight=1)
         self.grid_columnconfigure((0, 1), weight=1, uniform='column')
+
+        all_tasks = [
+            _ResourceReloadTask,
+            _ResourceSwitchLatestTask,
+            _ResourceSyncAllFileTask,
+            _ResourceSyncFileTask
+        ]
+        for i in all_tasks:
+            GUITaskCoordinator.register(i, all_tasks)
+
         self.abstract = _AbstractPanel(self)
         self.abstract.grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky='nsew')
         self.explorer = _ExplorerPanel(self)
@@ -40,15 +50,6 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
             self.local_root = None
         else:
             self.abstract.cmd_reload()
-
-        all_tasks = [
-            _ResourceReloadTask,
-            _ResourceSwitchLatestTask,
-            _ResourceSyncAllFileTask,
-            _ResourceSyncFileTask
-        ]
-        for i in all_tasks:
-            GUITaskCoordinator.register(i, all_tasks)
 
     def invoke_inspect(self, info:acp.FileInfoBase):
         self.inspector.inspect(info)
@@ -77,7 +78,6 @@ class _ResourceReloadTask(GUITaskBase):
         self._manager = manager
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         self.update(0.25, "正在读取本地仓库")
         t = self._manager.after(500, lambda:self.update(0.5))
         self._manager.local_root = Config.get('local_repo_root')
@@ -88,7 +88,6 @@ class _ResourceReloadTask(GUITaskBase):
             self._manager.invoke_load_tree(repo)
 
     def _on_complete(self):
-        self._manager.abstract.set_loading(False)
         self._manager.abstract.show_repo_res_version(self._manager.repo)
 
 class _ResourceSwitchLatestTask(GUITaskBase):
@@ -97,7 +96,6 @@ class _ResourceSwitchLatestTask(GUITaskBase):
         self._manager = manager
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         if isinstance(self._manager.repo, (acp.ArkIntegratedAssetRepo, acp.ArkLocalAssetsRepo)):
             self.update(0.1, "正在获取网路配置")
             self._manager.client.set_current_network_config()
@@ -114,7 +112,6 @@ class _ResourceSwitchLatestTask(GUITaskBase):
             self._manager.explorer.load_tree(self._manager.repo)
 
     def _on_complete(self):
-        self._manager.abstract.set_loading(False)
         self._manager.abstract.show_repo_res_version(self._manager.repo)
 
 
@@ -124,7 +121,6 @@ class _ResourceSyncAllFileTask(GUITaskBase):
         self._manager = manager
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo):
             STEP1_WEIGHT = 0.2
             STEP2_WEIGHT = 0.8
@@ -155,7 +151,6 @@ class _ResourceSyncAllFileTask(GUITaskBase):
                         f.write(d)
 
     def _on_complete(self):
-        self._manager.abstract.set_loading(False)
         self._manager.abstract.cmd_switch_latest()
 
 
@@ -170,25 +165,57 @@ class _AbstractPanel(ctk.CTkFrame):
         self.info_local_ver.show("<未知>")
         self.info_remote_ver = uic.InfoLabelGroup(self, 2, 0, "目标资源版本号", tight=True)
         self.info_remote_ver.show("<未知>")
-        self.btn_open = uic.OperationButton(self, 1, 1, "浏览", icon('repo_open'),
-                                            command=self.cmd_open)
-        self.btn_reload = uic.OperationButton(self, 2, 1, "重载", icon('repo_reload'),
-                                              command=self.cmd_reload, **style('operation_button_info'))
-        self.btn_switch_latest = uic.OperationButton(self, 1, 2, "切换最新版本", icon('switch_latest'),
-                                                     command=self.cmd_switch_latest)
-        self.btn_switch_manual = uic.OperationButton(self, 2, 2, "WIP：切换其他版本", icon('switch_manual'),
-                                                     **style('operation_button_info'))
-        self.btn_sync = uic.OperationButton(self, 1, 3, "同步所有变更", icon('repo_sync'),
-                                            command=self.cmd_sync_all_file)
+
+        self.btn_open = uic.OperationButton(
+            self,
+            1,
+            1,
+            "浏览",
+            image=icon('repo_open'),
+            command=self.cmd_open,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceReloadTask)
+        )
+        self.btn_reload = uic.OperationButton(
+            self,
+            2,
+            1,
+            "重载",
+            image=icon('repo_reload'),
+            command=self.cmd_reload,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceReloadTask),
+            **style('operation_button_info')
+        )
+        self.btn_switch_latest = uic.OperationButton(
+            self,
+            1,
+            2,
+            "切换最新版本",
+            image=icon('switch_latest'),
+            command=self.cmd_switch_latest,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceSwitchLatestTask)
+        )
+        self.btn_switch_manual = uic.OperationButton(
+            self,
+            2,
+            2,
+            "WIP：切换其他版本",
+            image=icon('switch_manual'),
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceSwitchLatestTask),
+            **style('operation_button_info')
+        )
+        self.btn_sync = uic.OperationButton(
+            self,
+            1,
+            3,
+            "同步所有变更",
+            image=icon('repo_sync'),
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceSyncAllFileTask),
+            command=self.cmd_sync_all_file
+        )
+
         self.progress = uic.ProgressBarGroup(self, 0, 0, grid_columnspan=1, init_visible=False)
-        self.btn_list = (self.btn_open, self.btn_reload, self.btn_switch_latest, self.btn_switch_manual, self.btn_sync)
         self.grid_columnconfigure((0), weight=1)
         self.grid_columnconfigure((1, 2, 3, 4), weight=0)
-
-    def set_loading(self, loading:bool):
-        for i in self.btn_list:
-            i.configure(state='disabled' if loading else 'normal')
-        self.progress.set_visible(loading)
 
     def show_repo_res_version(self, repo:acp.AssetRepoBase):
         self.info_local_ver.show("<未知>")
@@ -209,17 +236,17 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_reload(self):
         task = _ResourceReloadTask(self.master)
-        self.progress.bind_task(task)
+        self.progress.bind_task_auto_hide(task)
         task.start()
 
     def cmd_switch_latest(self):
         task = _ResourceSwitchLatestTask(self.master)
-        self.progress.bind_task(task)
+        self.progress.bind_task_auto_hide(task)
         task.start()
 
     def cmd_sync_all_file(self):
         task = _ResourceSyncAllFileTask(self.master)
-        self.progress.bind_task(task)
+        self.progress.bind_task_auto_hide(task)
         task.start()
 
 
@@ -303,13 +330,31 @@ class _OperationPanel(ctk.CTkFrame):
         super().__init__(master)
         self.title = ctk.CTkLabel(self, text="操作", image=icon('operation'), **style('panel_title'))
         self.title.grid(row=0, column=0, **style('panel_title_grid'))
-        self.btn_view = uic.OperationButton(self, 1, 0, "查看此文件", icon('file_view')
-                                            )
-        self.btn_sync = uic.OperationButton(self, 2, 0, "同步此文件", icon('file_sync')
-                                                     )
-        self.btn_goto = uic.OperationButton(self, 3, 0, "在文件夹中显示", icon('file_goto'),
-                                              **style('operation_button_info'))
         self.grid_columnconfigure((0), weight=1)
+
+        self.btn_view = uic.OperationButton(
+            self,
+            1,
+            0,
+            "查看此文件",
+            image=icon('file_view')
+        )
+        self.btn_sync = uic.OperationButton(
+            self,
+            2,
+            0,
+            "同步此文件",
+            image=icon('file_sync'),
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceSyncFileTask)
+        )
+        self.btn_goto = uic.OperationButton(
+            self,
+            3,
+            0,
+            "在文件夹中显示",
+            image=icon('file_goto'),
+            **style('operation_button_info')
+        )
 
     def inspect(self, info:acp.FileInfoBase):
         if isinstance(info, (acp.ArkIntegratedFileInfo, acp.ArkLocalFileInfo, acp.DirFileInfo)):
@@ -334,7 +379,7 @@ class _OperationPanel(ctk.CTkFrame):
     def cmd_sync(self, info:acp.FileInfoBase):
         if isinstance(info, acp.ArkIntegratedFileInfo):
             task = _ResourceSyncFileTask(self.master, info)
-            self.master.abstract.progress.bind_task(task)
+            self.master.abstract.progress.bind_task_auto_hide(task)
             task.start()
 
 
@@ -345,7 +390,6 @@ class _ResourceSyncFileTask(GUITaskBase):
         self._info = info
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo) and \
             isinstance(self._info, acp.ArkIntegratedFileInfo):
             if self._info.status == acp.FileStatus.DELETE:
@@ -360,6 +404,3 @@ class _ResourceSyncFileTask(GUITaskBase):
                     f.write(d)
             self.update(0.9, "正在校验...")
             self._manager.invoke_inspect(self._info)
-
-    def _on_complete(self):
-        self._manager.abstract.set_loading(False)

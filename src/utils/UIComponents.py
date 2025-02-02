@@ -61,14 +61,21 @@ class OperationButton(ctk.CTkButton, HidableGridWidget):
                  text:str,
                  image:ctk.CTkImage=None,
                  command:"Callable[[],Any]"=None,
+                 state_var:tk.BooleanVar=None,
                  **kwargs):
         ctk.CTkButton.__init__(self, master, text=text, image=image, command=command,
                                **style('operation_button'), **kwargs)
         HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=True, **style('operation_button_grid'))
+        if state_var is not None:
+            self.bind_state(state_var)
 
     def set_command(self, command:"Callable[[], Any]"):
         """Sets the active command of the button, `None` for disable the command."""
         self.configure(command=command)
+
+    def bind_state(self, var:tk.BooleanVar):
+        """Binds the state property of the button to the given boolean variable."""
+        var.trace_add('write', lambda *args: self.configure(state=tk.NORMAL if var.get() else tk.DISABLED))
 
 class InfoLabelGroup(ctk.CTkFrame, HidableGridWidget):
     """Information label group widget."""
@@ -140,6 +147,17 @@ class ProgressBarGroup(ctk.CTkFrame, HidableGridWidget):
         self.set_head_text(task.title)
         self._prog.configure(variable=task.observable_progress)
         self._body.configure(textvariable=task.observable_message)
+
+    def bind_task_auto_hide(self, task:GUITaskBase):
+        """Binds the progress to a task. Hides the progress bar when `progress>=1.0`."""
+        self.bind_task(task)
+        self.set_visible(True)
+        def auto_hide(*args):
+            nonlocal t
+            if task.observable_progress.get() >= 1.0:
+                self.set_visible(False)
+                task.observable_progress.trace_remove('write', t)
+        t = task.observable_progress.trace_add('write', auto_hide)
 
 ###############################
 # Specialized Preview Widgets #

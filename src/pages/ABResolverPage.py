@@ -21,6 +21,11 @@ class ABResolverPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.grid_rowconfigure((0, 2), weight=0)
         self.grid_rowconfigure((1), weight=1)
         self.grid_columnconfigure((0, 1), weight=1, uniform='column')
+
+        all_tasks = [_FileReloadTask, _FileExtractTask]
+        for i in all_tasks:
+            GUITaskCoordinator.register(i, all_tasks)
+
         self.abstract = _AbstractPanel(self)
         self.abstract.grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky='nsew')
         self.explorer = _ExplorerPanel(self)
@@ -31,10 +36,6 @@ class ABResolverPage(ctk.CTkFrame, uic.HidableGridWidget):
         self.operation.grid(row=2, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
         self.cur_ab = None
         self.cur_path = None
-
-        all_tasks = [_FileReloadTask, _FileExtractTask]
-        for i in all_tasks:
-            GUITaskCoordinator.register(i, all_tasks)
 
     def invoke_load_tree(self, ab:abh.ABHandler):
         self.cur_ab = ab
@@ -51,7 +52,6 @@ class _FileReloadTask(GUITaskBase):
         self._manager = manager
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         self.update(0.25, "正在读取对象列表")
         t = self._manager.after(500, lambda:self.update(0.5))
         if self._manager.cur_path:
@@ -61,7 +61,6 @@ class _FileReloadTask(GUITaskBase):
             self._manager.invoke_load_tree(ab)
 
     def _on_complete(self):
-        self._manager.abstract.set_loading(False)
         self._manager.abstract.show_file_info()
 
 class _FileExtractTask(GUITaskBase):
@@ -70,12 +69,8 @@ class _FileExtractTask(GUITaskBase):
         self._manager = manager
 
     def _run(self):
-        self._manager.abstract.set_loading(True)
         # TODO WIP: Extract object
-
-    def _on_complete(self):
-        self._manager.abstract.set_loading(False)
-
+        pass
 
 class _AbstractPanel(ctk.CTkFrame):
     master:ABResolverPage
@@ -88,21 +83,39 @@ class _AbstractPanel(ctk.CTkFrame):
         self.info_file_name.show("<未知>")
         self.info_file_path = uic.InfoLabelGroup(self, 2, 0, "文件路径", tight=True)
         self.info_file_path.show("<未知>")
-        self.btn_open = uic.OperationButton(self, 1, 1, "打开", icon('file_open'),
-                                            command=self.cmd_open)
-        self.btn_reload = uic.OperationButton(self, 2, 1, "刷新", icon('file_reload'),
-                                              command=self.cmd_reload, **style('operation_button_info'))
-        self.btn_extract = uic.OperationButton(self, 1, 2, "提取全部对象", icon('file_extract'),
-                                               command=self.cmd_extract_all)
+
+        self.btn_open = uic.OperationButton(
+            self,
+            1,
+            1,
+            "打开",
+            image=icon('file_open'),
+            command=self.cmd_open,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileReloadTask)
+        )
+        self.btn_reload = uic.OperationButton(
+            self,
+            2,
+            1,
+            "刷新",
+            image=icon('file_reload'),
+            command=self.cmd_reload,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileReloadTask),
+            **style('operation_button_info')
+        )
+        self.btn_extract = uic.OperationButton(
+            self,
+            1,
+            2,
+            "提取全部对象",
+            image=icon('file_extract'),
+            command=self.cmd_extract_all,
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask)
+        )
+
         self.progress = uic.ProgressBarGroup(self, 0, 0, grid_columnspan=1, init_visible=False)
-        self.btn_list = (self.btn_open, self.btn_reload, self.btn_extract)
         self.grid_columnconfigure((0), weight=1)
         self.grid_columnconfigure((1, 2, 3, 4), weight=0)
-
-    def set_loading(self, loading:bool):
-        for i in self.btn_list:
-            i.configure(state='disabled' if loading else 'normal')
-        self.progress.set_visible(loading)
 
     def show_file_info(self):
         ab = self.master.cur_ab
@@ -118,12 +131,12 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_reload(self):
         task = _FileReloadTask(self.master)
-        self.progress.bind_task(task)
+        self.progress.bind_task_auto_hide(task)
         task.start()
 
     def cmd_extract_all(self):
         task = _FileExtractTask(self.master)
-        self.progress.bind_task(task)
+        self.progress.bind_task_auto_hide(task)
         task.start()
 
 
@@ -206,9 +219,16 @@ class _OperationPanel(ctk.CTkFrame):
         super().__init__(master)
         self.title = ctk.CTkLabel(self, text="操作", image=icon('operation'), **style('panel_title'))
         self.title.grid(row=0, column=0, **style('panel_title_grid'))
-        self.btn_view = uic.OperationButton(self, 1, 0, "WIP：导出此对象", icon('file_extract')
-                                            )
         self.grid_columnconfigure((0), weight=1)
+
+        self.btn_view = uic.OperationButton(
+            self,
+            1,
+            0,
+            "WIP：导出此对象",
+            image=icon('file_extract'),
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask)
+        )
 
     def inspect(self, obj:abh.ObjectInfo):
         self.btn_view.set_visible(obj.is_extractable())
