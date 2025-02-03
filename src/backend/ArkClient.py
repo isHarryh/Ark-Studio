@@ -63,7 +63,7 @@ class ArkClient:
         return acp.ArkVersion.from_dict(self._fetch_dict(self._config.api_version(self._device)))
 
     def get_asset(self, name:str, unzip:bool=False):
-        """Fetches a hot-update asset from the remote. Returns its file-like object.
+        """Fetches the bytes content of a hot-update asset from the remote.
 
         :param name: The name of the asset;
         :param unzip: Whether to return the unzipped data;

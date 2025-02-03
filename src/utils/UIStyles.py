@@ -19,10 +19,12 @@ def icon(icon_key:str):
     else:
         raise TypeError(f"Not recognized value: {rst}")
 
+
 def file_icon(file_status:int):
     if file_status not in _FileIconHub.DATA:
         raise KeyError(f"File status icon not found: {file_status}")
     return _FileIconHub.DATA[file_status].get()
+
 
 def style(class_key:str):
     if class_key not in _StyleHub.DATA:
@@ -39,11 +41,14 @@ def style(class_key:str):
             raise TypeError(f"Not recognized style value: {v}")
     return rst
 
+
 def load_font_asset():
     ctk.FontManager.load_font("assets/fonts/SourceHanSansCN-Medium.otf")
 
+
 def load_ttk_style(master:tk.Misc):
     _TTkStyleHub.load_style_to(master)
+
 
 class _KwDict:
     def __init__(self, **kwargs):
@@ -59,6 +64,7 @@ class _KwDict:
 
     def __hash__(self):
         return hash(tuple(self._kwargs.items()))
+
 
 class _DefFont:
     """Lazy load ctk font definition record."""
@@ -86,6 +92,7 @@ class _DefFont:
 
     def dispose(self):
         _DefFont._CACHE.pop(self, None)
+
 
 class _DefImage:
     """Lazy load ctk image definition record."""
@@ -117,6 +124,7 @@ class _DefImage:
 
     def dispose(self):
         _DefImage._CACHE.pop(self._data, None)
+
 
 class _StyleHub:
     COLOR_WHITE = '#FFF'
@@ -215,6 +223,7 @@ class _StyleHub:
                                       'pady': (0, 5)},
     }
 
+
 class _IconHub:
     DATA:"dict[str,_DefImage|tuple[_DefImage]]" = {
         'progress': _DefImage('assets/icons_ui/i_rhombus.png', 18, repaint=_StyleHub.THEME[5]),
@@ -240,6 +249,7 @@ class _IconHub:
         'dialog_cancel': _DefImage('assets/icons_ui/i_cancel.png', 10, repaint=_StyleHub.THEME[0]),
     }
 
+
 class _FileIconHub:
     DATA:"dict[int,_DefImage]" = {
         acp.FileStatus.DIRECTORY: _DefImage('assets/icons_file/i_folder.png', 18, use_ctk=False),
@@ -252,6 +262,7 @@ class _FileIconHub:
         acp.FileStatus.DELETE: _DefImage('assets/icons_file/i_delete.png', 18, use_ctk=False),
         acp.FileStatus.DELETED: _DefImage('assets/icons_file/i_deleted.png', 18, use_ctk=False),
     }
+
 
 class _TTkStyleHub:
     @staticmethod

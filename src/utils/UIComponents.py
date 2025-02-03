@@ -77,6 +77,7 @@ class OperationButton(ctk.CTkButton, HidableGridWidget):
         """Binds the state property of the button to the given boolean variable."""
         var.trace_add('write', lambda *args: self.configure(state=tk.NORMAL if var.get() else tk.DISABLED))
 
+
 class InfoLabelGroup(ctk.CTkFrame, HidableGridWidget):
     """Information label group widget."""
 
@@ -112,6 +113,7 @@ class InfoLabelGroup(ctk.CTkFrame, HidableGridWidget):
         else:
             self._body.configure(text=placeholder)
         self._text = value
+
 
 class ProgressBarGroup(ctk.CTkFrame, HidableGridWidget):
     """Progress bar group widget."""
@@ -321,15 +323,15 @@ class TreeviewFrame(ctk.CTkFrame, HidableGridWidget, Generic[_ITEM_TYPE]):
         # Sort the items
         if column == '#0':
             # For the display column, just sort by the raw insert order
-            l = [self.iid2item.get_value(iid) for iid in self.treeview.get_children('')]
-            l = self._insert_sorter(l)
-            for i, item in enumerate(reversed(l) if self._sort_reverse else l):
+            li = [self.iid2item.get_value(iid) for iid in self.treeview.get_children('')]
+            li = self._insert_sorter(li)
+            for i, item in enumerate(reversed(li) if self._sort_reverse else li):
                 self.treeview.move(self.iid2item.get_key(item), '', i)
         else:
             # For value columns, sort by the cell value
-            l = [(self.treeview.set(iid, column), iid) for iid in self.treeview.get_children('')]
-            l.sort(reverse=self._sort_reverse)
-            for i, (_, iid) in enumerate(l):
+            li = [(self.treeview.set(iid, column), iid) for iid in self.treeview.get_children('')]
+            li.sort(reverse=self._sort_reverse)
+            for i, (_, iid) in enumerate(li):
                 self.treeview.move(iid, '', i)
         self._sort_reverse = not self._sort_reverse
 
@@ -455,9 +457,9 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
         self.name.configure(text=audio_name)
         self.info = ctk.CTkLabel(self, **style('audio_ctrl_info'))
         self.info.grid(row=1, column=0, columnspan=3)
-        self.info.configure(text=f"{self.track.duration} s | " + \
-                            f"{self.track.channels} Chs | " + \
-                            f"{self.track.bytes_per_sample * 8} bits | " + \
+        self.info.configure(text=f"{self.track.duration} s | " +
+                            f"{self.track.channels} Chs | " +
+                            f"{self.track.bytes_per_sample * 8} bits | " +
                             f"{self.track.sample_rate} Hz")
         self.var_duration = tk.DoubleVar(self, value=0.0)
         self.time_cur = ctk.CTkLabel(self, text=DurationFormatter.apply(0.0), **style('audio_ctrl_info'))

@@ -9,7 +9,6 @@ from ..utils.AnalyUtils import TestRT
 
 
 class ABHandler:
-
     def __init__(self, path:str):
         if not os.path.isfile(path):
             raise FileNotFoundError(path)
@@ -34,7 +33,6 @@ class ABHandler:
 
 
 class ObjectInfo:
-
     def __init__(self, obj:ObjectReader):
         if obj is None:
             raise ValueError("Argument obj is None")

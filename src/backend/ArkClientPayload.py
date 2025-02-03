@@ -51,6 +51,7 @@ class ArkNetworkConfig:
     def api_assets(self, res_version:str, device:str=DEFAULT_DEVICE):
         return f"{self.get('hu')}/{device}/assets/{res_version}"
 
+
 @total_ordering
 class ArkVersion:
     """Arknights version record."""
@@ -115,6 +116,7 @@ class ArkVersion:
         """Creates a ArkVersion instance from API response dictionary."""
         return cls(res=rsp['resVersion'], client=rsp['clientVersion'])
 
+
 class AssetRepoBase:
     """Assets repository handler base class."""
     def __init__(self):
@@ -145,6 +147,7 @@ class AssetRepoBase:
 
     def __repr__(self):
         return f"AssetRepo[{len(self.infos)} items]"
+
 
 class ArkLocalAssetsRepo(AssetRepoBase):
     """Arknights local assets repository handler."""
@@ -214,6 +217,7 @@ class ArkRemoteAssetsRepo(AssetRepoBase):
     def version(self):
         return self._version
 
+
 class FileInfoBase:
     """File information record base class."""
     SEP = '/'
@@ -280,6 +284,7 @@ class FileInfoBase:
     def __repr__(self):
         return f"File({self.name})"
 
+
 class DirFileInfo(FileInfoBase):
     """Simple implementation of directory file information record."""
 
@@ -294,6 +299,7 @@ class DirFileInfo(FileInfoBase):
     @property
     def status(self):
         return FileStatus.DIRECTORY
+
 
 class ArkLocalFileInfo(FileInfoBase):
     """Arknights local file information record."""
@@ -340,6 +346,7 @@ class ArkLocalFileInfo(FileInfoBase):
     def delete(self):
         if self.exist():
             os.unlink(self._path)
+
 
 class ArkRemoteFileInfo(FileInfoBase):
     """Arknights remote file information record."""
@@ -393,6 +400,7 @@ class ArkRemoteFileInfo(FileInfoBase):
             d_name = f'{d_name[:start]}.dat{d_name[end:]}'
         return d_name
 
+
 class ArkPackInfo:
     def __init__(self, info_dict:dict):
         self._name:str = info_dict.get('name') # Required
@@ -410,6 +418,7 @@ class ArkPackInfo:
     def __repr__(self):
         return f"Pack({self._name})"
 
+
 class FileStatus:
     DIRECTORY = -1
     UNCHECKED = 0
@@ -425,6 +434,7 @@ class FileStatus:
     @staticmethod
     def to_str(status:int):
         return FileStatus._DESC[status] if 0 <= status <= 7 else ""
+
 
 class ArkIntegratedAssetRepo(AssetRepoBase):
     """Arknights integrated assets repository handler."""
@@ -457,6 +467,7 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
     @property
     def remote(self):
         return self._remote
+
 
 class ArkIntegratedFileInfo(FileInfoBase):
     """Arknights integrated file information record."""

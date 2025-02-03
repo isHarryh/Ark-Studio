@@ -29,6 +29,7 @@ class PerformanceLevel():
         """Gets the maximum thread count according to the given performance level."""
         return PerformanceLevel.__MAP.get(performance_level, PerformanceLevel.__MAP[PerformanceLevel.STANDARD])
 
+
 class Config():
     """Configuration class for ArkStudio."""
 

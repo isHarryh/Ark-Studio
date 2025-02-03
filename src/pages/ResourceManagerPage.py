@@ -92,6 +92,7 @@ class _ResourceReloadTask(GUITaskBase):
     def _on_complete(self):
         self._manager.abstract.show_repo_res_version(self._manager.repo)
 
+
 class _ResourceSwitchLatestTask(GUITaskBase):
     def __init__(self, manager:ResourceManagerPage):
         super().__init__("正在切换到最新版本...")

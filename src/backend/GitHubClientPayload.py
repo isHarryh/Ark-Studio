@@ -28,7 +28,7 @@ class GitHubCommitData:
 
     @classmethod
     def from_dict(cls, rsp:dict):
-        """Create a GitHubCommitData instance from a GitHub API response dictionary."""
+        """Creates a GitHubCommitData instance from a GitHub API response dictionary."""
         return cls(
             sha=str(rsp['sha']),
             author_name=str(rsp['commit']['author']['name']),

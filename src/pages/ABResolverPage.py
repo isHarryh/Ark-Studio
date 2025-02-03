@@ -63,6 +63,7 @@ class _FileReloadTask(GUITaskBase):
     def _on_complete(self):
         self._manager.abstract.show_file_info()
 
+
 class _FileExtractTask(GUITaskBase):
     def __init__(self, manager:ABResolverPage):
         super().__init__("正在提取全部对象...")
@@ -71,6 +72,7 @@ class _FileExtractTask(GUITaskBase):
     def _run(self):
         # TODO WIP: Extract object
         pass
+
 
 class _AbstractPanel(ctk.CTkFrame):
     master:ABResolverPage
