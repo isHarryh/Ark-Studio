@@ -222,6 +222,7 @@ class _IconHub:
         'inspector': _DefImage('assets/icons_ui/i_file.png', 18, repaint=_StyleHub.THEME[3]),
         'abstract': _DefImage('assets/icons_ui/i_archive.png', 18, repaint=_StyleHub.THEME[3]),
         'operation': _DefImage('assets/icons_ui/i_tools.png', 18, repaint=_StyleHub.THEME[3]),
+        'goto': _DefImage('assets/icons_ui/i_arrow_right.png', 18, repaint=_StyleHub.THEME[3]),
         'repo_open': _DefImage('assets/icons_ui/i_binoculars.png', 18, repaint=_StyleHub.THEME[0]),
         'repo_reload': _DefImage('assets/icons_ui/i_synchronization.png', 18, repaint=_StyleHub.THEME[7]),
         'switch_latest': _DefImage('assets/icons_ui/i_arrow_up.png', 18, repaint=_StyleHub.THEME[0]),
@@ -235,6 +236,8 @@ class _IconHub:
         'file_extract': _DefImage('assets/icons_ui/i_upload.png', 18, repaint=_StyleHub.THEME[0]),
         'audio_play': _DefImage('assets/icons_ui/i_play.png', 14, repaint=_StyleHub.THEME[0]),
         'audio_pause': _DefImage('assets/icons_ui/i_pause.png', 14, repaint=_StyleHub.THEME[0]),
+        'dialog_okay': _DefImage('assets/icons_ui/i_okay.png', 10, repaint=_StyleHub.THEME[0]),
+        'dialog_cancel': _DefImage('assets/icons_ui/i_cancel.png', 10, repaint=_StyleHub.THEME[0]),
     }
 
 class _FileIconHub:
