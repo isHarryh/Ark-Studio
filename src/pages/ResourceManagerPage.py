@@ -7,6 +7,7 @@ import customtkinter as ctk
 
 from src.backend import ArkClient as ac
 from src.backend import ArkClientPayload as acp
+from src.dialogs.SelectVersionDialog import SelectVersionDialog
 from src.utils import UIComponents as uic
 from src.utils.AnalyUtils import TestRT
 from src.utils.Config import Config
@@ -28,6 +29,7 @@ class ResourceManagerPage(ctk.CTkFrame, uic.HidableGridWidget):
         all_tasks = [
             _ResourceReloadTask,
             _ResourceSwitchLatestTask,
+            _ResourceSwitchManualTask,
             _ResourceSyncAllFileTask,
             _ResourceSyncFileTask
         ]
@@ -102,6 +104,31 @@ class _ResourceSwitchLatestTask(GUITaskBase):
             self.update(0.3, "正在查询最新版本")
             self._manager.client.set_current_version()
             self.update(0.5, "正在获取资源列表")
+            remote = self._manager.client.get_repo()
+            self.update(0.8, "正在加载浏览视图")
+            if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo):
+                self._manager.repo = acp.ArkIntegratedAssetRepo(self._manager.repo.local, remote)
+            else:
+                self._manager.repo = acp.ArkIntegratedAssetRepo(self._manager.repo, remote)
+            self.update(0.9)
+            self._manager.explorer.load_tree(self._manager.repo)
+
+    def _on_complete(self):
+        self._manager.abstract.show_repo_res_version(self._manager.repo)
+
+
+class _ResourceSwitchManualTask(GUITaskBase):
+    def __init__(self, manager:ResourceManagerPage, ver:acp.ArkVersion):
+        super().__init__("正在切换到指定版本...")
+        self._manager = manager
+        self._ver = ver
+
+    def _run(self):
+        if isinstance(self._manager.repo, (acp.ArkIntegratedAssetRepo, acp.ArkLocalAssetsRepo)):
+            self.update(0.1, "正在获取网路配置")
+            self._manager.client.set_current_network_config()
+            self._manager.client.set_current_version(self._ver)
+            self.update(0.4, "正在获取资源列表")
             remote = self._manager.client.get_repo()
             self.update(0.8, "正在加载浏览视图")
             if isinstance(self._manager.repo, acp.ArkIntegratedAssetRepo):
@@ -198,8 +225,9 @@ class _AbstractPanel(ctk.CTkFrame):
             self,
             2,
             2,
-            "WIP：切换其他版本",
+            "切换其他版本",
             image=icon('switch_manual'),
+            command=self.cmd_switch_manual,
             state_var=GUITaskCoordinator.get_unblocked_indicator(_ResourceSwitchLatestTask),
             **style('operation_button_info')
         )
@@ -241,6 +269,16 @@ class _AbstractPanel(ctk.CTkFrame):
 
     def cmd_switch_latest(self):
         task = _ResourceSwitchLatestTask(self.master)
+        self.progress.bind_task_auto_hide(task)
+        task.start()
+
+    def cmd_switch_manual(self):
+        if self.master.repo is None:
+            return
+        dialog = SelectVersionDialog(self.master.master)
+        dialog.wait_window()
+        print(dialog.get_result())
+        task = _ResourceSwitchManualTask(self.master, dialog.get_result().version)
         self.progress.bind_task_auto_hide(task)
         task.start()
 
