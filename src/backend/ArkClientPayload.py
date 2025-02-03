@@ -57,9 +57,11 @@ class ArkVersion:
 
     REG_RES_VERSION = r'\d\d-\d\d-\d\d-\d\d-\d\d-\d\d-[\da-f]{6}'
 
-    def __init__(self, version_dict:dict=None):
-        self._res:str = version_dict.get('resVersion')
-        self._client:str = version_dict.get('clientVersion')
+    def __init__(self, res:"str|None"=None, client:"str|None"=None):
+        self._res = res
+        self._client = client
+        if not re.fullmatch(self.REG_RES_VERSION, self.res):
+            raise ValueError("Incorrect resVersion format")
 
     @property
     def res(self):
@@ -88,10 +90,12 @@ class ArkVersion:
         res_cmp = self._compare_versions(self.res, other.res)
         client_cmp = self._compare_versions(self.client, other.client)
 
-        if res_cmp < 0 and client_cmp < 0:
-            return True
+        if res_cmp == 0 and client_cmp == 0:
+            return False
         elif res_cmp >= 0 and client_cmp >= 0:
             return False
+        elif res_cmp <= 0 and client_cmp <= 0:
+            return True
         else:
             raise ValueError("Inconsistent version comparisons")
 
@@ -100,8 +104,16 @@ class ArkVersion:
             raise NotImplementedError()
         return self.res == other.res and self.client == other.client
 
+    def __hash__(self):
+        return hash((self._res, self._client))
+
     def __repr__(self):
         return f"Version({self._res}, {self._client})"
+
+    @classmethod
+    def from_dict(cls, rsp:dict):
+        """Creates a ArkVersion instance from API response dictionary."""
+        return cls(res=rsp['resVersion'], client=rsp['clientVersion'])
 
 class AssetRepoBase:
     """Assets repository handler base class."""
@@ -188,7 +200,7 @@ class ArkRemoteAssetsRepo(AssetRepoBase):
                 [ArkRemoteFileInfo(i) for i in hot_update_list_dict.get('abInfos')]
             self._packs:"list[ArkPackInfo]" = \
                 [ArkPackInfo(i) for i in hot_update_list_dict.get('packInfos')]
-            self._version:ArkVersion = ArkVersion({'resVersion': hot_update_list_dict.get('versionId')})
+            self._version:ArkVersion = ArkVersion(res=hot_update_list_dict.get('versionId'))
 
     @property
     def infos(self):

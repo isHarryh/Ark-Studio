@@ -60,7 +60,7 @@ class ArkClient:
         """Fetches the version info from the remote."""
         if self._config is None:
             raise ArkClientStateError("Network config is not initialized yet")
-        return acp.ArkVersion(self._fetch_dict(self._config.api_version(self._device)))
+        return acp.ArkVersion.from_dict(self._fetch_dict(self._config.api_version(self._device)))
 
     def get_asset(self, name:str, unzip:bool=False):
         """Fetches a hot-update asset from the remote. Returns its file-like object.
