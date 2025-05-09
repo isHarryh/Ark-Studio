@@ -273,7 +273,7 @@ class _TTkStyleHub:
         ttk_style.configure('Treeview',
                             font=_StyleHub.FONT_XXS.as_tuple(),
                             padding=2,
-                            foreground=_StyleHub.COLOR_WHITE,
+                            foreground=_StyleHub.COLOR_BLACK,
                             background=_StyleHub.COLOR_WHITE,
                             fieldbackground='transparent')
         ttk_style.map('Treeview', background=[('selected', _StyleHub.THEME[4])])

@@ -98,7 +98,7 @@ class SelectVersionDialog(ctk.CTkToplevel):
         rst:"list[acp.ArkVersion]" = []
         for c in commits:
             m = re.match(
-                r'\[([A-Z]{2}) UPDATE\] Client:([\d\.]+) Data:([a-zA-Z\d\-]+)',
+                r'\[([A-Z]{2}) UPDATE\] Client:([\d\.]+) Data:([a-zA-Z\d\-_]+)',
                 c.message
             )
             if m and m.group(1) == self._agd_server:

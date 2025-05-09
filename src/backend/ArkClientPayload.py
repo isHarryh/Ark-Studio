@@ -56,7 +56,7 @@ class ArkNetworkConfig:
 class ArkVersion:
     """Arknights version record."""
 
-    REG_RES_VERSION = r'\d\d-\d\d-\d\d-\d\d-\d\d-\d\d-[\da-f]{6}'
+    REG_RES_VERSION = r'\d\d-\d\d-\d\d-\d\d-\d\d-\d\d[-_][\da-f]{6}'
 
     def __init__(self, res:"str|None"=None, client:"str|None"=None):
         self._res = res
