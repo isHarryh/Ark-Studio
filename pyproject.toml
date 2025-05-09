@@ -1,31 +1,35 @@
-[tool.poetry]
+[project]
 name = "ArkStudio"
 version = "0.1.0"
 description = "Arknights Assets Studio"
-authors = ["Harry Huang <harryhuang2652@qq.com>"]
+authors = [
+    { name = "Harry Huang", email = "harryhuang2652@qq.com" }
+]
 license = "BSD-3-Clause"
 readme = "README.md"
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "flatbuffers (~=24.3)",
+    "numpy (~=1.26)",
+    "Pillow (~=9.5)",
+    "UnityPy (~=1.10)",
+    "customtkinter (~=5.2)",
+    "requests (~=2.32)",
+    "simpleaudio (~=1.0)",
+    "urllib3 (~=2.2)"
+]
+
+[tool.poetry]
 package-mode = false
-
-[tool.poetry.dependencies]
-python = "3.8.10"
-flatbuffers = "~24.3"
-numpy = "~1.24"
-Pillow = "~9.5"
-UnityPy = "~1.10"
-customtkinter = "~5.2"
-requests = "~2.32"
-simpleaudio = "~1.0"
-urllib3 = "~1.25"
-
-[tool.poetry.dev-dependencies]
-pyinstaller = "6.8.0"
 
 [[tool.poetry.source]]
 name = "PyPI-Tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "primary"
 
+[tool.poetry.group.dev.dependencies]
+pyinstaller = "6.8.0"
+
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
