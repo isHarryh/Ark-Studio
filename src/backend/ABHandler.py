@@ -4,7 +4,7 @@
 import os
 import UnityPy
 from UnityPy import classes
-from UnityPy.files import ObjectReader
+from UnityPy.files.ObjectReader import ObjectReader
 from ..utils.Profiler import CodeProfiler
 
 
@@ -18,10 +18,7 @@ class ABHandler:
         with CodeProfiler('res_get_objs'):
             self._objs = []
             for i in self._env.objects:
-                try:
-                    self.objects.append(ObjectInfo(i))
-                except AttributeError:
-                    pass
+                self.objects.append(ObjectInfo(i))
 
     @property
     def filepath(self):
@@ -33,12 +30,11 @@ class ABHandler:
 
 
 class ObjectInfo:
-    def __init__(self, obj:ObjectReader):
-        if obj is None:
-            raise ValueError("Argument obj is None")
-        self._obj:classes.GameObject = obj.read()
-        if getattr(self._obj, 'type', None) is None:
-            raise AttributeError("Missing type")
+    def __init__(self, obj_reader:ObjectReader):
+        if obj_reader is None:
+            raise ValueError("Argument obj_reader is None")
+        self._reader = obj_reader
+        self._obj:classes.Object = obj_reader.read()
 
     ####################
     # Basic Properties #
@@ -47,17 +43,17 @@ class ObjectInfo:
     @property
     def name(self):
         """Name of the object. `-` for nameless."""
-        return self._obj.name if getattr(self._obj, 'name', None) else '-'
+        return getattr(self._obj, 'm_Name', '-')
 
     @property
     def pathid(self):
         """Path ID property of the object."""
-        return self._obj.path_id
+        return self._reader.path_id
 
     @property
     def type(self):
         """Class ID enumeration of the object's type."""
-        return self._obj.type
+        return self._reader.type
 
     ####################
     # Asset Properties #
@@ -79,8 +75,7 @@ class ObjectInfo:
         which may be bytes of either decodable text or undecodable binary data.
         """
         if isinstance(self._obj, ObjectInfo._HAS_SCRIPT):
-            script = bytes(self._obj.script)
-            return script
+            return self._obj.m_Script
         return None
 
     @property

@@ -374,13 +374,16 @@ class TextPreviewer(ctk.CTkFrame, HidableGridWidget):
         self._empty_tip = empty_tip
         self.show(None)
 
-    def show(self, value:"bytes|None"):
+    def show(self, value:"str|None"):
         self.display.configure(state='normal')
         self.display.delete(TextPreviewer._START, TextPreviewer._END)
         if value:
             with CodeProfiler('preview_text'):
-                decoded = value.decode(errors='replace') if len(value) <= 10 << 20 else "该内容的数据量较大，已关闭预览"
-                self.display.insert(TextPreviewer._START, decoded)
+                if len(value) > 10 << 20:
+                    self.display.insert(TextPreviewer._START, "该内容的数据量较大，已关闭预览")
+                else:
+                    decoded = str(bytes(value, 'UTF-8', 'ignore'), encoding="UTF-8")
+                    self.display.insert(TextPreviewer._START, decoded)
         else:
             self.display.insert(TextPreviewer._START, self._empty_tip)
         self.display.configure(state='disabled')
