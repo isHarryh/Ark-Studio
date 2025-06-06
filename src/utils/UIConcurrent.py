@@ -63,8 +63,8 @@ class GUITaskBase():
             finally:
                 self._completed = True
                 self._running = False
-                self._on_complete()
                 GUITaskCoordinator.remove_task(self)
+                self._on_complete()
         self.__thread = threading.Thread(target=target, daemon=True, name=f"GUITask:{self.__class__.__name__}")
         self.__thread.start()
 
