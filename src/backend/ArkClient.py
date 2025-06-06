@@ -4,7 +4,7 @@
 import requests, zipfile
 from io import BytesIO
 from ..backend import ArkClientPayload as acp
-from ..utils.AnalyUtils import TestRT
+from ..utils.Profiler import CodeProfiler
 
 
 class ArkClientRequestError(OSError):
@@ -75,7 +75,7 @@ class ArkClient:
         data = self._fetch_bytes(
             f"{self._config.get('hu')}/{self._device}/assets/{self._version.res}/{name}")
         if unzip:
-            with TestRT('client_unzip_mem'):
+            with CodeProfiler('client_unzip_mem'):
                 with zipfile.ZipFile(BytesIO(data)) as zf:
                     nl = zf.namelist()
                     if len(nl) != 1:

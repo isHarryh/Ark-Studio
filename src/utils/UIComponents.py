@@ -9,7 +9,7 @@ from typing import Callable, Any, TypeVar, Generic
 
 from .UIStyles import style, icon
 from .UIConcurrent import GUITaskBase
-from ..utils.AnalyUtils import TestRT, DurationFormatter
+from ..utils.Profiler import CodeProfiler
 from ..utils.BiMap import BiMap
 from .AudioComposer import AudioComposer, AudioTrack
 
@@ -378,7 +378,7 @@ class TextPreviewer(ctk.CTkFrame, HidableGridWidget):
         self.display.configure(state='normal')
         self.display.delete(TextPreviewer._START, TextPreviewer._END)
         if value:
-            with TestRT('preview_text'):
+            with CodeProfiler('preview_text'):
                 decoded = value.decode(errors='replace') if len(value) <= 10 << 20 else "该内容的数据量较大，已关闭预览"
                 self.display.insert(TextPreviewer._START, decoded)
         else:
@@ -411,7 +411,7 @@ class ImagePreviewer(ctk.CTkFrame, HidableGridWidget):
 
     def show(self, value:"Image.Image|None"):
         if value:
-            with TestRT('preview_image'):
+            with CodeProfiler('preview_image'):
                 self.info.configure(text=f"{value.width} * {value.height}")
                 # Limit raw image size
                 if (scale := max(map(lambda x:ImagePreviewer._LIMIT_SIZE / x, value.size))) < 1:
@@ -462,9 +462,9 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
                             f"{self.track.bytes_per_sample * 8} bits | " +
                             f"{self.track.sample_rate} Hz")
         self.var_duration = tk.DoubleVar(self, value=0.0)
-        self.time_cur = ctk.CTkLabel(self, text=DurationFormatter.apply(0.0), **style('audio_ctrl_info'))
+        self.time_cur = ctk.CTkLabel(self, text=format_duration(0.0), **style('audio_ctrl_info'))
         self.time_cur.grid(row=2, column=0, sticky='w', **style('audio_ctrl_operation_grid'))
-        self.time_end = ctk.CTkLabel(self, text=DurationFormatter.apply(self.track.duration), **style('audio_ctrl_info'))
+        self.time_end = ctk.CTkLabel(self, text=format_duration(self.track.duration), **style('audio_ctrl_info'))
         self.time_end.grid(row=2, column=2, sticky='e', **style('audio_ctrl_operation_grid'))
         self.slider = ctk.CTkSlider(self, from_=0.0, to=self.track.duration, command=self._slider_action, variable=self.var_duration)
         self.slider.grid(row=3, column=0, columnspan=3, sticky='ew', **style('audio_ctrl_operation_grid'))
@@ -475,7 +475,7 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
         self.grid_columnconfigure((0, 1, 2), weight=1)
 
     def _slider_action(self, value:float):
-        self.time_cur.configure(text=DurationFormatter.apply(value))
+        self.time_cur.configure(text=format_duration(value))
         flag = self.track.is_playing()
         self.push_status(False)
         self.push_status(flag)
@@ -487,7 +487,7 @@ class AudioController(ctk.CTkFrame, HidableGridWidget):
         # Sync duration
         new_duration = self.track.get_playing_duration()
         self.var_duration.set(new_duration)
-        self.time_cur.configure(text=DurationFormatter.apply(min(new_duration, self.track.duration)))
+        self.time_cur.configure(text=format_duration(min(new_duration, self.track.duration)))
         # Sync playing status
         self.push_status(self.track.is_playing())
         # Register the next run
@@ -543,10 +543,22 @@ class AudioPreviewer(ctk.CTkFrame, HidableGridWidget):
             i.set_visible(False)
         self.controllers.clear()
         if isinstance(value, dict):
-            with TestRT('preview_audio'):
+            with CodeProfiler('preview_audio'):
                 # Add current audios
                 for i, (k, v) in enumerate(value.items()):
                     self.controllers.append(AudioController(self, i + 1, 0, k, v))
                 self.info.configure(text="")
         else:
             self.info.configure(text=self._empty_tip)
+
+
+def format_duration(sec:"int|float"):
+    if not isinstance(sec, (int, float)):
+        raise TypeError("Argument sec should be int or float")
+    h = int(sec / 3600)
+    m = int(sec % 3600 / 60)
+    s = int(sec % 60)
+    ms = round((sec - int(sec)) * 1000) if isinstance(sec, float) else None
+    if h != 0:
+        return f'{h}:{m:02}:{s:02}' + f'.{ms:03}' if isinstance(sec, float) else ''
+    return f'{m:02}:{s:02}' + f'.{ms:03}' if isinstance(sec, float) else ''

@@ -6,7 +6,7 @@ from functools import total_ordering
 from collections import defaultdict
 
 from ..utils.Config import Config
-from ..utils.AnalyUtils import TestRT
+from ..utils.Profiler import CodeProfiler
 
 
 CONN_TIMEOUT = 10
@@ -128,7 +128,7 @@ class AssetRepoBase:
 
     def get_parent_map(self) -> "dict[FileInfoBase,FileInfoBase]":
         # Estimated RT: 0.02-0.1s (very fast)
-        with TestRT('map_parent'):
+        with CodeProfiler('map_parent'):
             rst = {}
             for i in self.infos:
                 rst[i] = i.parent
@@ -136,7 +136,7 @@ class AssetRepoBase:
 
     def get_children_map(self) -> "dict[FileInfoBase,set[FileInfoBase]]":
         # Estimated RT: 0.06~0.4s (fast)
-        with TestRT('map_children'):
+        with CodeProfiler('map_children'):
             rst = defaultdict(set)
             for i in self.infos:
                 p, c = i.parent, i
@@ -177,7 +177,7 @@ class ArkLocalAssetsRepo(AssetRepoBase):
 
     def _fetch_infos(self):
         # Estimated RT: 1~2s (slow)
-        with TestRT('get_infos_local'):
+        with CodeProfiler('get_infos_local'):
             if not os.path.isdir(self._root_dir):
                 raise FileNotFoundError(self._root_dir)
             infos:"list[ArkLocalFileInfo]" = []
@@ -198,7 +198,7 @@ class ArkRemoteAssetsRepo(AssetRepoBase):
     def __init__(self, hot_update_list_dict:dict):
         super().__init__()
         # Estimated RT: 0.01-0.02s (very fast)
-        with TestRT('get_infos_remote'):
+        with CodeProfiler('get_infos_remote'):
             self._infos:"list[ArkRemoteFileInfo]" = \
                 [ArkRemoteFileInfo(i) for i in hot_update_list_dict.get('abInfos')]
             self._packs:"list[ArkPackInfo]" = \
@@ -447,7 +447,7 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
     @property
     def infos(self):
         # Estimated RT: 0.01-0.07s (very fast)
-        with TestRT('get_infos_integrated'):
+        with CodeProfiler('get_infos_integrated'):
             name2local = {l.name: l for l in self._local.infos}
             name2remote = {r.name: r for r in self._remote.infos}
             infos:"list[ArkIntegratedFileInfo]" = []

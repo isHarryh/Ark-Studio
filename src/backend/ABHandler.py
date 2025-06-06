@@ -5,7 +5,7 @@ import os
 import UnityPy
 from UnityPy import classes
 from UnityPy.files import ObjectReader
-from ..utils.AnalyUtils import TestRT
+from ..utils.Profiler import CodeProfiler
 
 
 class ABHandler:
@@ -13,9 +13,9 @@ class ABHandler:
         if not os.path.isfile(path):
             raise FileNotFoundError(path)
         self._path = path
-        with TestRT('res_load'):
+        with CodeProfiler('res_load'):
             self._env = UnityPy.load(path)
-        with TestRT('res_get_objs'):
+        with CodeProfiler('res_get_objs'):
             self._objs = []
             for i in self._env.objects:
                 try:

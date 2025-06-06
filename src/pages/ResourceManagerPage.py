@@ -9,7 +9,7 @@ from src.backend import ArkClient as ac
 from src.backend import ArkClientPayload as acp
 from src.dialogs.SelectVersionDialog import SelectVersionDialog
 from src.utils import UIComponents as uic
-from src.utils.AnalyUtils import TestRT
+from src.utils.Profiler import CodeProfiler
 from src.utils.Config import Config
 from src.utils.OSUtils import FileSystem
 from src.utils.UIStyles import file_icon, icon, style
@@ -314,7 +314,7 @@ class _ExplorerPanel(ctk.CTkFrame):
         self.grid_columnconfigure((0), weight=1)
 
     def load_tree(self, repo:acp.AssetRepoBase):
-        with TestRT('repo_load_tree'):
+        with CodeProfiler('repo_load_tree'):
             # Clear the current items
             self.treeview.clear()
             # Load the new items
