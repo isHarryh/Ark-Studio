@@ -1,8 +1,5 @@
 {
-    "pylint.args": [
-        "--max-line-length=120",
-        "--disable=R,W0212,W0223,W0621,W0622,W0718,C3001"
-    ],
+    "black-formatter.args": ["-l 120"],
     "cSpell.language": "en,en-US,en-GB",
     "cSpell.words": [
         "columnspan",
@@ -17,4 +14,7 @@
         "tkinter",
         "torappu"
     ],
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnType": true,
+    "python.analysis.typeCheckingMode": "standard"
 }
