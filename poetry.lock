@@ -997,20 +997,45 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 reference = "PyPI-Tsinghua"
 
 [[package]]
-name = "simpleaudio"
-version = "1.0.4"
+name = "simpleaudio-patched"
+version = "1.0.5"
 description = "Simple, asynchronous audio playback for Python 3."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "simpleaudio-1.0.4-cp37-cp37m-macosx_10_6_intel.whl", hash = "sha256:05b63da515f5fc7c6f40e4d9673d22239c5e03e2bda200fc09fd21c185d73713"},
-    {file = "simpleaudio-1.0.4-cp37-cp37m-win32.whl", hash = "sha256:f1a4fe3358429b2ea3181fd782e4c4fff5c123ca86ec7fc29e01ee9acd8a227a"},
-    {file = "simpleaudio-1.0.4-cp37-cp37m-win_amd64.whl", hash = "sha256:86f1b0985629852afe67259ac6c24905ca731cb202a6e96b818865c56ced0c27"},
-    {file = "simpleaudio-1.0.4-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:f68820297ad51577e3a77369e7e9b23989d30d5ae923bf34c92cf983c04ade04"},
-    {file = "simpleaudio-1.0.4-cp38-cp38-win32.whl", hash = "sha256:67348e3d3ccbae73bd126beed7f1e242976889620dbc6974c36800cd286430fc"},
-    {file = "simpleaudio-1.0.4-cp38-cp38-win_amd64.whl", hash = "sha256:f346a4eac9cdbb1b3f3d0995095b7e86c12219964c022f4d920c22f6ca05fb4c"},
-    {file = "simpleaudio-1.0.4.tar.gz", hash = "sha256:691c88649243544db717e7edf6a9831df112104e1aefb5f6038a5d071e8cf41d"},
+    {file = "simpleaudio_patched-1.0.5-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:92ae3a2ef425d57befe72724094656d44d24297445fc4e48bd9c5a11622ab0ca"},
+    {file = "simpleaudio_patched-1.0.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f47091b1d3b97682888e87670881de2252220dfa3dbdbbb8ffba7dd9f39b85cb"},
+    {file = "simpleaudio_patched-1.0.5-cp310-cp310-win32.whl", hash = "sha256:cfbc59566f9c168bba0ea27457c1bbee3204b85ae7de184af3a2a5261befd462"},
+    {file = "simpleaudio_patched-1.0.5-cp310-cp310-win_amd64.whl", hash = "sha256:29c7c19897d71810b070e2357b6a40a81cbdf83ca332172054d2ca5dfccca70c"},
+    {file = "simpleaudio_patched-1.0.5-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:e815f691da53d01ab611c4d79aa8da99130e816d523786aa5d7933240ed9d427"},
+    {file = "simpleaudio_patched-1.0.5-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:61f029936f3ef423e06aab56317f4af8099f43a6dcc974d92588c3a590123999"},
+    {file = "simpleaudio_patched-1.0.5-cp311-cp311-win32.whl", hash = "sha256:0b4e2449e686a33050f5594fcca55ba1e71fb006260e7aea6ea2dc3939c9b4f7"},
+    {file = "simpleaudio_patched-1.0.5-cp311-cp311-win_amd64.whl", hash = "sha256:8950b130f8c51bda7bbebb11fdbb248f36d9d2d976a344bf849d1d0b135277b2"},
+    {file = "simpleaudio_patched-1.0.5-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:ccb9cbca11bf2ee10e1617579463dad0f8b28075d060026c794a80bedf9fd388"},
+    {file = "simpleaudio_patched-1.0.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8597c316ea69a4f36e6eb18a100925c08d36fe2e8e10044f7083db3502374fa7"},
+    {file = "simpleaudio_patched-1.0.5-cp312-cp312-win32.whl", hash = "sha256:6de2c6a150e56ed3fce74b992d673ba2eb065abf8b3a4d419a8ef213fb990847"},
+    {file = "simpleaudio_patched-1.0.5-cp312-cp312-win_amd64.whl", hash = "sha256:d64053e1c8e4088449f0e6913209fc0cb799a6e77e23a45088f21da16fdb0ed8"},
+    {file = "simpleaudio_patched-1.0.5-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c45f3400aa84c428ddf1363a5de194b57ab5c6c990bcbebf85039fa6de70b230"},
+    {file = "simpleaudio_patched-1.0.5-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:310a2c1674648588f6d073c7c3f6dd136fcf916d0c3b22fddcaab27a54b0715b"},
+    {file = "simpleaudio_patched-1.0.5-cp38-cp38-win32.whl", hash = "sha256:f82383945e748c2eb758612eb52fd358cab356736b2e5f8ed4ae464b9f8f28e7"},
+    {file = "simpleaudio_patched-1.0.5-cp38-cp38-win_amd64.whl", hash = "sha256:6a3ea3f5f19e27c65d11484a7140e2785f2f100d8861d316d155e23b1f91e87f"},
+    {file = "simpleaudio_patched-1.0.5-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:05b280805cd96cb25945c6190780c947759a6f4c3642dfe8ef7fc5d8e452cc5e"},
+    {file = "simpleaudio_patched-1.0.5-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:b404d81801ab27bfd6e95aff4a630380f1403f6a729379f7c1c424eb35ce4d27"},
+    {file = "simpleaudio_patched-1.0.5-cp39-cp39-win32.whl", hash = "sha256:6d20a5b1b217c324cbdd611976debcba3de913cde09e04473d1845e80f620621"},
+    {file = "simpleaudio_patched-1.0.5-cp39-cp39-win_amd64.whl", hash = "sha256:3e7952a36d6b9defd97251213a0adf684fc998f32621eb2c27863cc451564e37"},
+    {file = "simpleaudio_patched-1.0.5-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:3a75f0e3ad6ad5693bcf54bfe8cb9fd50fd0d58b438b477761588084dc848fd4"},
+    {file = "simpleaudio_patched-1.0.5-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:6443491fc299743ca5d99127e994d84323c9fc97566ce762b850ae7a94c105e8"},
+    {file = "simpleaudio_patched-1.0.5-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:6d65632f3d6f7e465ed8828bf4b2865042501d494aae4a1632c0092aa13215a7"},
+    {file = "simpleaudio_patched-1.0.5-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:5759fe969eb88434446adc5c5a463eab1c6c64c3ffe2ecf8083bcead22565c86"},
+    {file = "simpleaudio_patched-1.0.5-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:df93f294a4664f9fcd6537d3bfc2bacaa8b5b916b99df8c4604e4e664720d5fa"},
+    {file = "simpleaudio_patched-1.0.5-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:4b7a793eaa24c5b0d33a3dc696307ed297f2d797b93aff1f591487a7cfe9ea2e"},
+    {file = "simpleaudio_patched-1.0.5-pp38-pypy38_pp73-macosx_11_0_arm64.whl", hash = "sha256:18310d22a8d4d8fc732f8c553911c9d8fe98aef465775d39442feff21ab05cc4"},
+    {file = "simpleaudio_patched-1.0.5-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:9fe7088f2d2433dee3a0ae8bcd789f1d8ef0adc10dac14e0b71172a9bb44681f"},
+    {file = "simpleaudio_patched-1.0.5-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:7a4aab817df11e514d1c13a5a06b8edbfe3c2dedde077f4065bc9c9c819bbd35"},
+    {file = "simpleaudio_patched-1.0.5-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:1ed3fac6005c68e2524278907bc8c0be27710e42b1392ea8160a7f2e85d38800"},
+    {file = "simpleaudio_patched-1.0.5-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:feedb60aa45f41b5608718a8b57a57932d2372ad6615add0bc3994cafa56be5a"},
+    {file = "simpleaudio_patched-1.0.5.tar.gz", hash = "sha256:f34d8ec7fb175fc054d84b1642ea8ecaa4f49a0d0661d98850ec400dcfdfb004"},
 ]
 
 [package.source]
@@ -1221,4 +1246,4 @@ reference = "PyPI-Tsinghua"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9,<3.13"
-content-hash = "65710d787124ca1887087095dc1e1a2f8f3d581b3e6f984b0a197333af2c9c23"
+content-hash = "8f3e9d02815a268abf3015d34be378eaf4d07ab08877a0e92ed2c0bbc4ceb231"

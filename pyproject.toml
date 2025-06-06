@@ -15,7 +15,7 @@ dependencies = [
     "UnityPy (~=1.22)",
     "customtkinter (~=5.2)",
     "requests (~=2.32)",
-    "simpleaudio (~=1.0)"
+    "simpleaudio-patched (~=1.0)"
 ]
 
 [tool.poetry]
