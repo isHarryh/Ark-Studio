@@ -8,7 +8,7 @@ import os.path as osp
 from .Logger import Logger
 
 
-class PerformanceLevel():
+class PerformanceLevel:
     """Enumeration class for performance level."""
 
     MINIMAL = 0
@@ -17,36 +17,26 @@ class PerformanceLevel():
     HIGH = 3
 
     __CPU = max(1, os.cpu_count() if os.cpu_count() is not None else 1)
-    __MAP = {
-        MINIMAL: 1,
-        LOW: max(2, __CPU // 2),
-        STANDARD: max(4, __CPU),
-        HIGH: max(8, __CPU * 2)
-    }
+    __MAP = {MINIMAL: 1, LOW: max(2, __CPU // 2), STANDARD: max(4, __CPU), HIGH: max(8, __CPU * 2)}
 
     @staticmethod
-    def get_thread_limit(performance_level:int):
+    def get_thread_limit(performance_level: int):
         """Gets the maximum thread count according to the given performance level."""
         return PerformanceLevel.__MAP.get(performance_level, PerformanceLevel.__MAP[PerformanceLevel.STANDARD])
 
 
-class Config():
+class Config:
     """Configuration class for ArkStudio."""
 
     __instance = None
     __config_path = "ArkStudioConfig.json"
-    __file_encoding = 'UTF-8'
+    __file_encoding = "UTF-8"
     __default_config = {
-        'local_ignore': [
-            "^temp",
-            ".exe$",
-            ".log$",
-            ".json$"
-        ],
-        'local_repo_root': None,
-        'log_file': "ArkStudioLogs.log",
-        'log_level': Logger.LV_INFO,
-        'performance_level': PerformanceLevel.STANDARD
+        "local_ignore": ["^temp", ".exe$", ".log$", ".json$"],
+        "local_repo_root": None,
+        "log_file": "ArkStudioLogs.log",
+        "log_level": Logger.LV_INFO,
+        "performance_level": PerformanceLevel.STANDARD,
     }
 
     def __init__(self):
@@ -63,29 +53,38 @@ class Config():
     def _read_config(self):
         if osp.isfile(Config.__config_path):
             try:
-                loaded_config = json.load(open(Config.__config_path, 'r', encoding=Config.__file_encoding))
+                loaded_config = json.load(open(Config.__config_path, "r", encoding=Config.__file_encoding))
                 if isinstance(loaded_config, dict):
                     for k in Config.__default_config.keys():
                         default_val = Config.__default_config[k]
-                        self.config[k] = loaded_config[k] if isinstance(loaded_config.get(k, None), type(default_val)) else default_val
-                Logger.set_instance(self.get('log_file'), self.get('log_level'))
-                Logger.set_level(self.get('log_level'))
+                        self.config[k] = (
+                            loaded_config[k]
+                            if isinstance(loaded_config.get(k, None), type(default_val))
+                            else default_val
+                        )
+                Logger.set_instance(self.get("log_file"), self.get("log_level"))
+                Logger.set_level(self.get("log_level"))
                 Logger.info("Config: Applied config.")
             except Exception as arg:
                 self.config = Config.__default_config
-                Logger.set_instance(self.get('log_file'), self.get('log_level'))
-                Logger.set_level(self.get('log_level'))
+                Logger.set_instance(self.get("log_file"), self.get("log_level"))
+                Logger.set_level(self.get("log_level"))
                 Logger.error(f"Config: Failed to parsing config, now using default config, cause: {arg}")
         else:
             self.config = Config.__default_config
-            Logger.set_instance(self.get('log_file'), self.get('log_level'))
-            Logger.set_level(self.get('log_level'))
+            Logger.set_instance(self.get("log_file"), self.get("log_level"))
+            Logger.set_level(self.get("log_level"))
             Logger.info("Config: Applied default config.")
             self.save_config()
 
     def _save_config(self):
         try:
-            json.dump(self.config, open(self.__config_path, 'w', encoding=Config.__file_encoding), indent=4, ensure_ascii=False)
+            json.dump(
+                self.config,
+                open(self.__config_path, "w", encoding=Config.__file_encoding),
+                indent=4,
+                ensure_ascii=False,
+            )
             Logger.info("Config: Saved config.")
         except Exception as arg:
             Logger.error(f"Config: Failed to save config, cause: {arg}")

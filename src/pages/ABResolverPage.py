@@ -14,46 +14,46 @@ from .ArkStudioAppInterface import App
 
 
 class ABResolverPage(ctk.CTkFrame, uic.HidableGridWidget):
-    def __init__(self, app:App, grid_row:int, grid_column:int):
+    def __init__(self, app: App, grid_row: int, grid_column: int):
         ctk.CTkFrame.__init__(self, app, corner_radius=0)
-        uic.HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=False, sticky='nsew')
+        uic.HidableGridWidget.__init__(self, grid_row, grid_column, init_visible=False, sticky="nsew")
         self.app = app
         self.grid_rowconfigure((0, 2), weight=0)
         self.grid_rowconfigure((1), weight=1)
-        self.grid_columnconfigure((0, 1), weight=1, uniform='column')
+        self.grid_columnconfigure((0, 1), weight=1, uniform="column")
 
         all_tasks = [_FileReloadTask, _FileExtractTask]
         for i in all_tasks:
             GUITaskCoordinator.register(i, all_tasks)
 
         self.abstract = _AbstractPanel(self)
-        self.abstract.grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky='nsew')
+        self.abstract.grid(row=0, column=0, columnspan=2, padx=10, pady=(10, 5), sticky="nsew")
         self.explorer = _ExplorerPanel(self)
-        self.explorer.grid(row=1, column=0, rowspan=2, padx=(10, 5), pady=(5, 10), sticky='nsew')
+        self.explorer.grid(row=1, column=0, rowspan=2, padx=(10, 5), pady=(5, 10), sticky="nsew")
         self.inspector = _InspectorPanel(self)
-        self.inspector.grid(row=1, column=1, padx=(5, 10), pady=5, sticky='nsew')
+        self.inspector.grid(row=1, column=1, padx=(5, 10), pady=5, sticky="nsew")
         self.operation = _OperationPanel(self)
-        self.operation.grid(row=2, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
+        self.operation.grid(row=2, column=1, padx=(5, 10), pady=(5, 10), sticky="nsew")
         self.cur_ab = None
         self.cur_path = None
 
-    def invoke_load_tree(self, ab:abh.ABHandler):
+    def invoke_load_tree(self, ab: abh.ABHandler):
         self.cur_ab = ab
         self.explorer.load_tree(self.cur_ab)
 
-    def invoke_inspect(self, obj:abh.ObjectInfo):
+    def invoke_inspect(self, obj: abh.ObjectInfo):
         self.inspector.inspect(obj)
         self.operation.inspect(obj)
 
 
 class _FileReloadTask(GUITaskBase):
-    def __init__(self, manager:ABResolverPage):
+    def __init__(self, manager: ABResolverPage):
         super().__init__("正在读取对象列表...")
         self._manager = manager
 
     def _run(self):
         self.update(0.25, "正在读取对象列表")
-        t = self._manager.after(500, lambda:self.update(0.5))
+        t = self._manager.after(500, lambda: self.update(0.5))
         if self._manager.cur_path:
             ab = abh.ABHandler(self._manager.cur_path)
             self._manager.after_cancel(t)
@@ -65,7 +65,7 @@ class _FileReloadTask(GUITaskBase):
 
 
 class _FileExtractTask(GUITaskBase):
-    def __init__(self, manager:ABResolverPage):
+    def __init__(self, manager: ABResolverPage):
         super().__init__("正在提取全部对象...")
         self._manager = manager
 
@@ -75,12 +75,12 @@ class _FileExtractTask(GUITaskBase):
 
 
 class _AbstractPanel(ctk.CTkFrame):
-    master:ABResolverPage
+    master: ABResolverPage
 
-    def __init__(self, master:ABResolverPage):
+    def __init__(self, master: ABResolverPage):
         super().__init__(master)
-        self.title = ctk.CTkLabel(self, text="资源文件概要", image=icon('abstract'), **style('panel_title'))
-        self.title.grid(row=0, column=0, **style('panel_title_grid'))
+        self.title = ctk.CTkLabel(self, text="资源文件概要", image=icon("abstract"), **style("panel_title"))
+        self.title.grid(row=0, column=0, **style("panel_title_grid"))
         self.info_file_name = uic.InfoLabelGroup(self, 1, 0, "文件名称", tight=True)
         self.info_file_name.show("<未知>")
         self.info_file_path = uic.InfoLabelGroup(self, 2, 0, "文件路径", tight=True)
@@ -91,28 +91,28 @@ class _AbstractPanel(ctk.CTkFrame):
             1,
             1,
             "打开",
-            image=icon('file_open'),
+            image=icon("file_open"),
             command=self.cmd_open,
-            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileReloadTask)
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileReloadTask),
         )
         self.btn_reload = uic.OperationButton(
             self,
             2,
             1,
             "刷新",
-            image=icon('file_reload'),
+            image=icon("file_reload"),
             command=self.cmd_reload,
             state_var=GUITaskCoordinator.get_unblocked_indicator(_FileReloadTask),
-            **style('operation_button_info')
+            **style("operation_button_info"),
         )
         self.btn_extract = uic.OperationButton(
             self,
             1,
             2,
             "提取全部对象",
-            image=icon('file_extract'),
+            image=icon("file_extract"),
             command=self.cmd_extract_all,
-            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask)
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask),
         )
 
         self.progress = uic.ProgressBarGroup(self, 0, 0, grid_columnspan=1, init_visible=False)
@@ -126,7 +126,7 @@ class _AbstractPanel(ctk.CTkFrame):
             self.info_file_path.show(ab.filepath)
 
     def cmd_open(self):
-        new_file = fd.askopenfilename(filetypes=[('Asset Bundle', '*.ab'), ('Any File', '*')])
+        new_file = fd.askopenfilename(filetypes=[("Asset Bundle", "*.ab"), ("Any File", "*")])
         if new_file and os.path.isfile(new_file):
             self.cmd_reload()
             self.master.cur_path = new_file
@@ -143,27 +143,29 @@ class _AbstractPanel(ctk.CTkFrame):
 
 
 class _ExplorerPanel(ctk.CTkFrame):
-    master:ABResolverPage
+    master: ABResolverPage
 
-    def __init__(self, master:ABResolverPage):
+    def __init__(self, master: ABResolverPage):
         super().__init__(master)
-        self.title = ctk.CTkLabel(self, text="对象浏览器", image=icon('explorer'), **style('panel_title'))
-        self.title.grid(row=0, column=0, **style('panel_title_grid'))
-        self.children_map:"dict[acp.FileInfoBase,set[abh.ObjectInfo]]" = None
-        self.treeview:"uic.TreeviewFrame[abh.ObjectInfo]" = uic.TreeviewFrame(self, 1, 0, columns=3, tree_mode=False, empty_tip="列表为空")
+        self.title = ctk.CTkLabel(self, text="对象浏览器", image=icon("explorer"), **style("panel_title"))
+        self.title.grid(row=0, column=0, **style("panel_title_grid"))
+        self.children_map: "dict[acp.FileInfoBase,set[abh.ObjectInfo]]" = None
+        self.treeview: "uic.TreeviewFrame[abh.ObjectInfo]" = uic.TreeviewFrame(
+            self, 1, 0, columns=3, tree_mode=False, empty_tip="列表为空"
+        )
         self.treeview.set_column(0, 350, "对象名称")
         self.treeview.set_column(1, 100, "类型")
-        self.treeview.set_column(2, 150, "PathID", anchor='ne')
-        self.treeview.set_text_extractor(lambda x:x.name)
-        self.treeview.set_icon_extractor(lambda x:file_icon(1))
-        self.treeview.set_value_extractor(lambda x:(x.type.name, x.pathid))
+        self.treeview.set_column(2, 150, "PathID", anchor="ne")
+        self.treeview.set_text_extractor(lambda x: x.name)
+        self.treeview.set_icon_extractor(lambda x: file_icon(1))
+        self.treeview.set_value_extractor(lambda x: (x.type.name, x.pathid))
         self.treeview.set_on_item_selected(self.master.invoke_inspect)
-        self.treeview.set_insert_order(lambda x:sorted(x, key=lambda y:(y.type.name, y.name)))
+        self.treeview.set_insert_order(lambda x: sorted(x, key=lambda y: (y.type.name, y.name)))
         self.grid_rowconfigure((0), weight=0)
         self.grid_rowconfigure((1), weight=1)
         self.grid_columnconfigure((0), weight=1)
 
-    def load_tree(self, ab:abh.ABHandler):
+    def load_tree(self, ab: abh.ABHandler):
         # Clear the current items
         self.treeview.clear()
         # Load the new items
@@ -171,9 +173,9 @@ class _ExplorerPanel(ctk.CTkFrame):
 
 
 class _InspectorPanel(ctk.CTkTabview):
-    master:ABResolverPage
+    master: ABResolverPage
 
-    def __init__(self, master:ABResolverPage):
+    def __init__(self, master: ABResolverPage):
         super().__init__(master)
         self.tab_names = ("对象信息", "文本", "图像", "音频")
         # Tab 1 >>>>> Info
@@ -194,7 +196,7 @@ class _InspectorPanel(ctk.CTkTabview):
         self.audio_area = uic.AudioPreviewer(self.tab4, 0, 0, "无可解码的音频")
         self.tab4.grid_columnconfigure((0), weight=1)
 
-    def inspect(self, obj:abh.ObjectInfo):
+    def inspect(self, obj: abh.ObjectInfo):
         self.info_name.show(obj.name)
         self.info_type.show(obj.type.name)
         self.info_pathid.show(obj.pathid)
@@ -215,12 +217,12 @@ class _InspectorPanel(ctk.CTkTabview):
 
 
 class _OperationPanel(ctk.CTkFrame):
-    master:ABResolverPage
+    master: ABResolverPage
 
-    def __init__(self, master:ABResolverPage):
+    def __init__(self, master: ABResolverPage):
         super().__init__(master)
-        self.title = ctk.CTkLabel(self, text="操作", image=icon('operation'), **style('panel_title'))
-        self.title.grid(row=0, column=0, **style('panel_title_grid'))
+        self.title = ctk.CTkLabel(self, text="操作", image=icon("operation"), **style("panel_title"))
+        self.title.grid(row=0, column=0, **style("panel_title_grid"))
         self.grid_columnconfigure((0), weight=1)
 
         self.btn_view = uic.OperationButton(
@@ -228,9 +230,9 @@ class _OperationPanel(ctk.CTkFrame):
             1,
             0,
             "WIP：导出此对象",
-            image=icon('file_extract'),
-            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask)
+            image=icon("file_extract"),
+            state_var=GUITaskCoordinator.get_unblocked_indicator(_FileExtractTask),
         )
 
-    def inspect(self, obj:abh.ObjectInfo):
+    def inspect(self, obj: abh.ObjectInfo):
         self.btn_view.set_visible(obj.is_extractable())

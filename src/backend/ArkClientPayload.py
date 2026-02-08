@@ -11,6 +11,7 @@ from ..utils.Profiler import CodeProfiler
 
 CONN_TIMEOUT = 10
 
+
 class ArkNetworkConfig:
     """Arknights client network config record."""
 
@@ -23,32 +24,32 @@ class ArkNetworkConfig:
     }
     ```
     """
-    DEFAULT_DEVICE = 'Android'
+    DEFAULT_DEVICE = "Android"
 
-    def __init__(self, network_config_dict:dict):
+    def __init__(self, network_config_dict: dict):
         # Retrieve config from response
-        content:"dict[str,object]" = json.loads(network_config_dict.get('content'))
-        configs:"dict[str,dict]" = content.get('configs')
+        content: "dict[str,object]" = json.loads(network_config_dict.get("content"))
+        configs: "dict[str,dict]" = content.get("configs")
         # Choose the first config with override=True, or the first config if none have override=True
         chosen_config = None
         for _, config in configs.items():
-            if config.get('override', False):
+            if config.get("override", False):
                 chosen_config = config
                 break
         if not chosen_config:
             chosen_config = list(configs.values())[0]
-        self._dict:"dict[str,str]" = chosen_config.get('network')
+        self._dict: "dict[str,str]" = chosen_config.get("network")
 
-    def get(self, key:str, *args:str):
-        value = self._dict.get(key, '')
+    def get(self, key: str, *args: str):
+        value = self._dict.get(key, "")
         if args:
             value = value.format(*args)
         return value
 
-    def api_version(self, device:str=DEFAULT_DEVICE):
-        return self.get('hv', device)
+    def api_version(self, device: str = DEFAULT_DEVICE):
+        return self.get("hv", device)
 
-    def api_assets(self, res_version:str, device:str=DEFAULT_DEVICE):
+    def api_assets(self, res_version: str, device: str = DEFAULT_DEVICE):
         return f"{self.get('hu')}/{device}/assets/{res_version}"
 
 
@@ -56,9 +57,9 @@ class ArkNetworkConfig:
 class ArkVersion:
     """Arknights version record."""
 
-    REG_RES_VERSION = r'\d\d-\d\d-\d\d-\d\d-\d\d-\d\d[-_][\da-f]{6}'
+    REG_RES_VERSION = r"\d\d-\d\d-\d\d-\d\d-\d\d-\d\d[-_][\da-f]{6}"
 
-    def __init__(self, res:"str|None"=None, client:"str|None"=None):
+    def __init__(self, res: "str|None" = None, client: "str|None" = None):
         self._res = res
         self._client = client
         if not re.fullmatch(self.REG_RES_VERSION, self.res):
@@ -74,11 +75,11 @@ class ArkVersion:
         """Arknights client version."""
         return self._client
 
-    def _normalize_version(self, version:str):
-        parts = re.split(r'[^a-zA-Z0-9]', version.lower())
+    def _normalize_version(self, version: str):
+        parts = re.split(r"[^a-zA-Z0-9]", version.lower())
         return [(0, int(char)) if char.isdigit() else (1, char) for char in parts]
 
-    def _compare_versions(self, v1:str, v2:str):
+    def _compare_versions(self, v1: str, v2: str):
         if v1 is None or v2 is None:
             return 0
         n1 = self._normalize_version(v1)
@@ -112,13 +113,14 @@ class ArkVersion:
         return f"Version({self._res}, {self._client})"
 
     @classmethod
-    def from_dict(cls, rsp:dict):
+    def from_dict(cls, rsp: dict):
         """Creates a ArkVersion instance from API response dictionary."""
-        return cls(res=rsp['resVersion'], client=rsp['clientVersion'])
+        return cls(res=rsp["resVersion"], client=rsp["clientVersion"])
 
 
 class AssetRepoBase:
     """Assets repository handler base class."""
+
     def __init__(self):
         pass
 
@@ -128,7 +130,7 @@ class AssetRepoBase:
 
     def get_parent_map(self) -> "dict[FileInfoBase,FileInfoBase]":
         # Estimated RT: 0.02-0.1s (very fast)
-        with CodeProfiler('map_parent'):
+        with CodeProfiler("map_parent"):
             rst = {}
             for i in self.infos:
                 rst[i] = i.parent
@@ -136,7 +138,7 @@ class AssetRepoBase:
 
     def get_children_map(self) -> "dict[FileInfoBase,set[FileInfoBase]]":
         # Estimated RT: 0.06~0.4s (fast)
-        with CodeProfiler('map_children'):
+        with CodeProfiler("map_children"):
             rst = defaultdict(set)
             for i in self.infos:
                 p, c = i.parent, i
@@ -152,7 +154,7 @@ class AssetRepoBase:
 class ArkLocalAssetsRepo(AssetRepoBase):
     """Arknights local assets repository handler."""
 
-    def __init__(self, root_dir:str):
+    def __init__(self, root_dir: str):
         super().__init__()
         self._root_dir = root_dir
         self._infos = self._fetch_infos()
@@ -167,9 +169,9 @@ class ArkLocalAssetsRepo(AssetRepoBase):
 
     def detect_res_version(self):
         for i in self.infos:
-            if i.name == 'torappu_index.ab' and i.exist():
+            if i.name == "torappu_index.ab" and i.exist():
                 with i.open() as f:
-                    d = f.read().decode(encoding='UTF-8', errors='replace')
+                    d = f.read().decode(encoding="UTF-8", errors="replace")
                     matches = re.findall(ArkVersion.REG_RES_VERSION, d)
                     if len(matches) == 1:
                         return matches[0]
@@ -177,16 +179,16 @@ class ArkLocalAssetsRepo(AssetRepoBase):
 
     def _fetch_infos(self):
         # Estimated RT: 1~2s (slow)
-        with CodeProfiler('get_infos_local'):
+        with CodeProfiler("get_infos_local"):
             if not os.path.isdir(self._root_dir):
                 raise FileNotFoundError(self._root_dir)
-            infos:"list[ArkLocalFileInfo]" = []
+            infos: "list[ArkLocalFileInfo]" = []
             for root, _, files in os.walk(self._root_dir):
                 for f in files:
                     name = os.path.realpath(os.path.join(root, f))
                     name = os.path.relpath(name, self._root_dir)
-                    name.replace('\\', '/')
-                    if any(re.match(p, name) for p in Config.get('local_ignore')):
+                    name.replace("\\", "/")
+                    if any(re.match(p, name) for p in Config.get("local_ignore")):
                         continue
                     infos.append(ArkLocalFileInfo(name, self._root_dir))
             return infos
@@ -195,15 +197,13 @@ class ArkLocalAssetsRepo(AssetRepoBase):
 class ArkRemoteAssetsRepo(AssetRepoBase):
     """Arknights remote assets repository handler."""
 
-    def __init__(self, hot_update_list_dict:dict):
+    def __init__(self, hot_update_list_dict: dict):
         super().__init__()
         # Estimated RT: 0.01-0.02s (very fast)
-        with CodeProfiler('get_infos_remote'):
-            self._infos:"list[ArkRemoteFileInfo]" = \
-                [ArkRemoteFileInfo(i) for i in hot_update_list_dict.get('abInfos')]
-            self._packs:"list[ArkPackInfo]" = \
-                [ArkPackInfo(i) for i in hot_update_list_dict.get('packInfos')]
-            self._version:ArkVersion = ArkVersion(res=hot_update_list_dict.get('versionId'))
+        with CodeProfiler("get_infos_remote"):
+            self._infos: "list[ArkRemoteFileInfo]" = [ArkRemoteFileInfo(i) for i in hot_update_list_dict.get("abInfos")]
+            self._packs: "list[ArkPackInfo]" = [ArkPackInfo(i) for i in hot_update_list_dict.get("packInfos")]
+            self._version: ArkVersion = ArkVersion(res=hot_update_list_dict.get("versionId"))
 
     @property
     def infos(self):
@@ -220,9 +220,10 @@ class ArkRemoteAssetsRepo(AssetRepoBase):
 
 class FileInfoBase:
     """File information record base class."""
-    SEP = '/'
+
+    SEP = "/"
     RADIX = 1024
-    UNITS = ('B', 'KB', 'MB', 'GB', 'TB')
+    UNITS = ("B", "KB", "MB", "GB", "TB")
 
     def __init__(self):
         self.__basename = None
@@ -248,7 +249,7 @@ class FileInfoBase:
         """Base name. This property is lazily auto generated by the property `name`."""
         if self.__basename is None:
             chain = self.name.split(FileInfoBase.SEP)
-            self.__basename = chain[-1] if len(chain) > 0 else ''
+            self.__basename = chain[-1] if len(chain) > 0 else ""
         return self.__basename
 
     @property
@@ -258,10 +259,10 @@ class FileInfoBase:
             return None
         if self.__parent is None:
             chain = self.name.split(FileInfoBase.SEP)
-            self.__parent = DirFileInfo(FileInfoBase.SEP.join(chain[:-1]) if len(chain) > 1 else '')
+            self.__parent = DirFileInfo(FileInfoBase.SEP.join(chain[:-1]) if len(chain) > 1 else "")
         return self.__parent
 
-    def get_file_size_str(self, digits:int=0):
+    def get_file_size_str(self, digits: int = 0):
         try:
             s = self.file_size
             for i in FileInfoBase.UNITS:
@@ -273,7 +274,7 @@ class FileInfoBase:
         except NotImplementedError:
             return ""
 
-    def __eq__(self, other:object):
+    def __eq__(self, other: object):
         if isinstance(other, FileInfoBase):
             return self.name == other.name
         return False
@@ -288,7 +289,7 @@ class FileInfoBase:
 class DirFileInfo(FileInfoBase):
     """Simple implementation of directory file information record."""
 
-    def __init__(self, name:str):
+    def __init__(self, name: str):
         super().__init__()
         self._name = name
 
@@ -304,11 +305,11 @@ class DirFileInfo(FileInfoBase):
 class ArkLocalFileInfo(FileInfoBase):
     """Arknights local file information record."""
 
-    def __init__(self, name:str, root_dir:str):
+    def __init__(self, name: str, root_dir: str):
         super().__init__()
-        self._name = name.replace(os.sep, '/')
+        self._name = name.replace(os.sep, "/")
         self._root_dir = root_dir
-        self._path = os.path.join(self._root_dir, self._name).replace(os.sep, '/')
+        self._path = os.path.join(self._root_dir, self._name).replace(os.sep, "/")
 
     @property
     def name(self):
@@ -325,15 +326,15 @@ class ArkLocalFileInfo(FileInfoBase):
     @property
     def md5(self):
         if os.path.isfile(self._path):
-            byte = open(self._path, 'rb').read()
+            byte = open(self._path, "rb").read()
             return hashlib.md5(byte).hexdigest()
-        return ''
+        return ""
 
     @property
     def file_size(self):
         if not os.path.isfile(self._path):
             return 0
-        with open(self._path, 'rb') as f:
+        with open(self._path, "rb") as f:
             return f.seek(0, os.SEEK_END)
 
     def exist(self):
@@ -341,7 +342,7 @@ class ArkLocalFileInfo(FileInfoBase):
 
     def open(self):
         if self.exist():
-            return open(self._path, 'rb')
+            return open(self._path, "rb")
 
     def delete(self):
         if self.exist():
@@ -351,16 +352,16 @@ class ArkLocalFileInfo(FileInfoBase):
 class ArkRemoteFileInfo(FileInfoBase):
     """Arknights remote file information record."""
 
-    def __init__(self, info_dict:dict):
+    def __init__(self, info_dict: dict):
         super().__init__()
-        self._name:str = info_dict.get('name') # Required
+        self._name: str = info_dict.get("name")  # Required
         # Unused self._hash:str = info_dict.get('hash') # Required
-        self._md5:str = info_dict.get('md5') # Required
-        self._data_size:int = int(info_dict.get('totalSize')) # Required
-        self._file_size:int = int(info_dict.get('abSize')) # Required
+        self._md5: str = info_dict.get("md5")  # Required
+        self._data_size: int = int(info_dict.get("totalSize"))  # Required
+        self._file_size: int = int(info_dict.get("abSize"))  # Required
         # Unused self._thash:str = info_dict.get('thash', None)
-        self._type:str = info_dict.get('type', None)
-        self._pack:str = info_dict.get('pid', None)
+        self._type: str = info_dict.get("type", None)
+        self._pack: str = info_dict.get("pid", None)
         # Unused self._cid:int = info_dict.get('cid') # Required
 
     @property
@@ -393,18 +394,18 @@ class ArkRemoteFileInfo(FileInfoBase):
 
     @property
     def data_name(self):
-        d_name = self._name.replace('/', '_').replace('#', '__')
-        ext_matches = list(re.finditer(r'\..+', d_name))
+        d_name = self._name.replace("/", "_").replace("#", "__")
+        ext_matches = list(re.finditer(r"\..+", d_name))
         if ext_matches:
             start, end = ext_matches[-1].span()
-            d_name = f'{d_name[:start]}.dat{d_name[end:]}'
+            d_name = f"{d_name[:start]}.dat{d_name[end:]}"
         return d_name
 
 
 class ArkPackInfo:
-    def __init__(self, info_dict:dict):
-        self._name:str = info_dict.get('name') # Required
-        self._data_size:int = int(info_dict.get('totalSize')) # Required
+    def __init__(self, info_dict: dict):
+        self._name: str = info_dict.get("name")  # Required
+        self._data_size: int = int(info_dict.get("totalSize"))  # Required
         # Unused self._cid:int = info_dict.get('cid') # Required
 
     @property
@@ -432,14 +433,14 @@ class FileStatus:
     _DESC = ["未检查", "无变更", "新增", "已同步新增", "修改", "已同步修改", "删除", "已同步删除"]
 
     @staticmethod
-    def to_str(status:int):
+    def to_str(status: int):
         return FileStatus._DESC[status] if 0 <= status <= 7 else ""
 
 
 class ArkIntegratedAssetRepo(AssetRepoBase):
     """Arknights integrated assets repository handler."""
 
-    def __init__(self, local:ArkLocalAssetsRepo, remote:ArkRemoteAssetsRepo):
+    def __init__(self, local: ArkLocalAssetsRepo, remote: ArkRemoteAssetsRepo):
         super().__init__()
         self._local = local
         self._remote = remote
@@ -447,10 +448,10 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
     @property
     def infos(self):
         # Estimated RT: 0.01-0.07s (very fast)
-        with CodeProfiler('get_infos_integrated'):
+        with CodeProfiler("get_infos_integrated"):
             name2local = {l.name: l for l in self._local.infos}
             name2remote = {r.name: r for r in self._remote.infos}
-            infos:"list[ArkIntegratedFileInfo]" = []
+            infos: "list[ArkIntegratedFileInfo]" = []
             for l in self._local.infos:
                 r = name2remote.get(l.name, None)
                 infos.append(ArkIntegratedFileInfo(l, r))
@@ -472,7 +473,7 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
 class ArkIntegratedFileInfo(FileInfoBase):
     """Arknights integrated file information record."""
 
-    def __init__(self, local:ArkLocalFileInfo, remote:ArkRemoteFileInfo=None):
+    def __init__(self, local: ArkLocalFileInfo, remote: ArkRemoteFileInfo = None):
         super().__init__()
         if local is None:
             raise ValueError("Argument local is none")
@@ -520,13 +521,14 @@ class ArkIntegratedFileInfo(FileInfoBase):
             md5_local = self.local.md5
             md5_remote = self.remote.md5
             # Check MD5 consistency
-            if (
-                md5_local == md5_remote
-                or len(md5_local) != len(md5_remote)  # MD5 unavailable
-            ):
+            if md5_local == md5_remote or len(md5_local) != len(md5_remote):  # MD5 unavailable
                 return (
-                    FileStatus.MODIFIED if self._status_cache in (FileStatus.MODIFY, FileStatus.MODIFIED) else
-                    FileStatus.ADDED if self._status_cache in (FileStatus.ADD, FileStatus.ADDED) else
-                    FileStatus.OKAY
+                    FileStatus.MODIFIED
+                    if self._status_cache in (FileStatus.MODIFY, FileStatus.MODIFIED)
+                    else (
+                        FileStatus.ADDED
+                        if self._status_cache in (FileStatus.ADD, FileStatus.ADDED)
+                        else FileStatus.OKAY
+                    )
                 )
         return FileStatus.MODIFY if s_remote else FileStatus.DELETE

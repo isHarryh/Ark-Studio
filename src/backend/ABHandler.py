@@ -9,13 +9,13 @@ from ..utils.Profiler import CodeProfiler
 
 
 class ABHandler:
-    def __init__(self, path:str):
+    def __init__(self, path: str):
         if not os.path.isfile(path):
             raise FileNotFoundError(path)
         self._path = path
-        with CodeProfiler('res_load'):
+        with CodeProfiler("res_load"):
             self._env = UnityPy.load(path)
-        with CodeProfiler('res_get_objs'):
+        with CodeProfiler("res_get_objs"):
             self._objs = []
             for i in self._env.objects:
                 self.objects.append(ObjectInfo(i))
@@ -30,11 +30,11 @@ class ABHandler:
 
 
 class ObjectInfo:
-    def __init__(self, obj_reader:ObjectReader):
+    def __init__(self, obj_reader: ObjectReader):
         if obj_reader is None:
             raise ValueError("Argument obj_reader is None")
         self._reader = obj_reader
-        self._obj:classes.Object = obj_reader.read()
+        self._obj: classes.Object = obj_reader.read()
 
     ####################
     # Basic Properties #
@@ -43,7 +43,7 @@ class ObjectInfo:
     @property
     def name(self):
         """Name of the object. `-` for nameless."""
-        return getattr(self._obj, 'm_Name', '-')
+        return getattr(self._obj, "m_Name", "-")
 
     @property
     def pathid(self):

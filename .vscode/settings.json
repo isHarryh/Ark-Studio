@@ -15,6 +15,6 @@
         "torappu"
     ],
     "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnType": true,
+    "editor.formatOnSave": true,
     "python.analysis.typeCheckingMode": "standard"
 }

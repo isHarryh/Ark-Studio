@@ -5,14 +5,14 @@ import threading
 import tkinter as tk
 
 
-class GUITaskBase():
+class GUITaskBase:
     """GUI task handler base class."""
 
     DEFAULT_START_MESSAGE = "正在初始化"
     DEFAULT_SUCCESS_MESSAGE = "完成"
     DEFAULT_FAILURE_MESSAGE = "失败"
 
-    def __init__(self, title:str=""):
+    def __init__(self, title: str = ""):
         self._title = title
         self._completed = False
         self._cancelled = False
@@ -45,6 +45,7 @@ class GUITaskBase():
         if self._running:
             raise TaskReuseError("This task is running now")
         GUITaskCoordinator.add_task(self)
+
         def target():
             self._completed = False
             self._cancelled = False
@@ -65,6 +66,7 @@ class GUITaskBase():
                 self._running = False
                 GUITaskCoordinator.remove_task(self)
                 self._on_complete()
+
         self.__thread = threading.Thread(target=target, daemon=True, name=f"GUITask:{self.__class__.__name__}")
         self.__thread.start()
 
@@ -72,7 +74,7 @@ class GUITaskBase():
         """Cancels the task. It will only sets the status to cancelled."""
         self._cancelled = True
 
-    def update(self, progress:float=None, message:str=None):
+    def update(self, progress: float = None, message: str = None):
         """Updates the progress variable or the message variable. `None` for not updated."""
         if progress:
             self.__progress.set(progress)
@@ -115,19 +117,19 @@ class GUITaskBase():
         return self.__message
 
 
-class GUITaskCoordinator():
-    _REGISTRY:"dict[type[GUITaskBase],tuple[tk.BooleanVar,list[type[GUITaskBase]]]]" = {
+class GUITaskCoordinator:
+    _REGISTRY: "dict[type[GUITaskBase],tuple[tk.BooleanVar,list[type[GUITaskBase]]]]" = {
         # (type) Task class : (BooleanVar) Unblocked indicator, (list) Blocking task classes
     }
     _REGISTRY_LOCK = threading.Lock()
 
-    _RUNNING:"list[GUITaskBase]" = [
+    _RUNNING: "list[GUITaskBase]" = [
         # (GuiTaskBase, ...) Currently running tasks
     ]
     _RUNNING_LOCK = threading.Lock()
 
     @staticmethod
-    def register(task_cls:"type[GUITaskBase]", blocking_tasks_cls:"list[type[GUITaskBase]]"):
+    def register(task_cls: "type[GUITaskBase]", blocking_tasks_cls: "list[type[GUITaskBase]]"):
         """Registers a new task class."""
         with GUITaskCoordinator._REGISTRY_LOCK:
             if task_cls in GUITaskCoordinator._REGISTRY:
@@ -136,7 +138,7 @@ class GUITaskCoordinator():
             GUITaskCoordinator._REGISTRY[task_cls] = (bool_var, blocking_tasks_cls)
 
     @staticmethod
-    def get_unblocked_indicator(task_cls:"type[GUITaskBase]"):
+    def get_unblocked_indicator(task_cls: "type[GUITaskBase]"):
         """Gets the unblocked indicator of the given task class."""
         with GUITaskCoordinator._REGISTRY_LOCK:
             if task_cls not in GUITaskCoordinator._REGISTRY:
@@ -144,7 +146,7 @@ class GUITaskCoordinator():
             return GUITaskCoordinator._REGISTRY[task_cls][0]
 
     @staticmethod
-    def add_task(new_task:GUITaskBase):
+    def add_task(new_task: GUITaskBase):
         """Adds a new task instance. Error will be raised if blocking triggered."""
         with GUITaskCoordinator._RUNNING_LOCK:
             if any(new_task == t for t in GUITaskCoordinator._RUNNING):
@@ -155,7 +157,7 @@ class GUITaskCoordinator():
             GUITaskCoordinator._update_vars()
 
     @staticmethod
-    def remove_task(old_task:GUITaskBase):
+    def remove_task(old_task: GUITaskBase):
         """Removes an old task instance."""
         with GUITaskCoordinator._RUNNING_LOCK:
             if old_task not in GUITaskCoordinator._RUNNING:
@@ -168,26 +170,20 @@ class GUITaskCoordinator():
         with GUITaskCoordinator._REGISTRY_LOCK:
             for _, (bool_var, blocking_tasks_cls) in GUITaskCoordinator._REGISTRY.items():
                 bool_var.set(
-                    all(
-                        all(
-                            not isinstance(t, r)
-                            for r in blocking_tasks_cls
-                        )
-                        for t in GUITaskCoordinator._RUNNING
-                    )
+                    all(all(not isinstance(t, r) for r in blocking_tasks_cls) for t in GUITaskCoordinator._RUNNING)
                 )
 
 
 class TaskReuseError(RuntimeError):
-    def __init__(self, *args:object):
+    def __init__(self, *args: object):
         super().__init__(*args)
 
 
 class TaskBlockingError(RuntimeError):
-    def __init__(self, *args:object):
+    def __init__(self, *args: object):
         super().__init__(*args)
 
 
 class TaskCoordinatorError(RuntimeError):
-    def __init__(self, *args:object):
+    def __init__(self, *args: object):
         super().__init__(*args)

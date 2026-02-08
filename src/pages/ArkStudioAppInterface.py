@@ -5,8 +5,8 @@ import customtkinter as ctk
 
 
 class App(ctk.CTkFrame):
-    p_rm:ctk.CTkFrame
-    p_ar:ctk.CTkFrame
-    p_ic:ctk.CTkFrame
-    p_fd:ctk.CTkFrame
-    sidebar:ctk.CTkFrame
+    p_rm: ctk.CTkFrame
+    p_ar: ctk.CTkFrame
+    p_ic: ctk.CTkFrame
+    p_fd: ctk.CTkFrame
+    sidebar: ctk.CTkFrame

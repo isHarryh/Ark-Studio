@@ -10,14 +10,14 @@ from io import BytesIO
 class AudioComposer:
     """Audio composer."""
 
-    __instance:"AudioComposer" = None
+    __instance: "AudioComposer" = None
 
     def __init__(self):
         """Not recommended to use. Please use the singleton instance."""
-        self._tracks:"dict[int,AudioTrack]" = {}
+        self._tracks: "dict[int,AudioTrack]" = {}
 
     @staticmethod
-    def load(track:"AudioTrack", track_id:int=0):
+    def load(track: "AudioTrack", track_id: int = 0):
         """Loads the given track to the specified track id.
         If the track id is existed, it will be overwritten without disposing."""
         if not AudioComposer.__instance:
@@ -25,19 +25,19 @@ class AudioComposer:
         return AudioComposer.__instance._load(track, track_id)
 
     @staticmethod
-    def dispose(track_id:int):
+    def dispose(track_id: int):
         """Disposes the specified track id."""
         if not AudioComposer.__instance:
             AudioComposer.__instance = AudioComposer()
         return AudioComposer.__instance._dispose(track_id)
 
-    def _load(self, track:"AudioTrack", track_id:int=0):
+    def _load(self, track: "AudioTrack", track_id: int = 0):
         if track_id in self._tracks:
             self._tracks[track_id].stop()
         self._tracks[track_id] = track
         return track
 
-    def _dispose(self, track_id:int):
+    def _dispose(self, track_id: int):
         if track_id in self._tracks:
             self._tracks[track_id].dispose()
             del self._tracks[track_id]
@@ -46,7 +46,7 @@ class AudioComposer:
 class AudioTrack:
     """Track session that controls the audio to be played."""
 
-    def __init__(self, audio_data:bytes):
+    def __init__(self, audio_data: bytes):
         """Initializes the audio track session with the given audio data bytes."""
         wave_read = wave.open(BytesIO(audio_data))
         wave_obj = simpleaudio.WaveObject.from_wave_read(wave_read)
@@ -54,7 +54,7 @@ class AudioTrack:
         self._play_obj = None
         self._play_start_time = None
 
-    def _sec_to_idx(self, sec:float):
+    def _sec_to_idx(self, sec: float):
         if sec is None:
             return None
         idx = sec * self.bytes_per_second
@@ -62,7 +62,7 @@ class AudioTrack:
         idx = idx * self.bytes_per_sample * self.channels
         return int(min(idx, self.size) if idx >= 0 else max(-self.size, idx))
 
-    def play(self, begin:float=None, end:float=None):
+    def play(self, begin: float = None, end: float = None):
         """Starts playing. This will stops previous playing on this track first."""
         if not self._wave_obj:
             raise RuntimeError("Nothings is playable")
@@ -117,7 +117,7 @@ class AudioTrack:
         return self._wave_obj.num_channels
 
     @property
-    def duration(self, ndigits:int=3):
+    def duration(self, ndigits: int = 3):
         """Audio's duration in seconds."""
         return round(self.size / self.bytes_per_second, ndigits)
 
