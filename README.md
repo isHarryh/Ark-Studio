@@ -6,7 +6,7 @@
    <h1> Ark-Studio </h1>
    <p>
       Arknights Assets Studio | 明日方舟游戏资源集成式管理平台 <br>
-      <code><b> WIP </b></code>
+      <code><b> v0 </b></code>
    </p>
    <p>
       <img alt="GitHub Top Language" src="https://img.shields.io/github/languages/top/isHarryh/Ark-Studio?label=Python">
@@ -18,9 +18,18 @@
    </sub>
 </div>
 
-## 介绍 <sub>Intro</sub>
+## 弃用通知 <sub>Deprecation Notice</sub>
 
-**正在开发中（This Project is Now Working in Progress...）**
+⚠ **当前分支 v0 已弃用！**  
+⚠ **Current branch v0 is deprecated!**
+
+由于此分支采用的前端框架 tkinter 已经不再满足开发需求，因此已弃用此分支。后续开发将转向更先进的前端框架，请访问最新分支以了解最新信息。  
+Since the frontend framework tkinter used in this branch no longer meets the development needs, this branch has been deprecated. Future development will shift to a more advanced frontend framework, please visit the latest branch for the latest information.
+
+弃用日期：2026年2月  
+Deprecation date: February 2026
+
+## 介绍 <sub>Intro</sub>
 
 **ArkStudio** 是为游戏《明日方舟》开发的，能够一体化管理游戏资源的非官方项目。
 
@@ -74,7 +83,7 @@
 
 本项目的 GUI 基于 tkinter 和 customtkinter 开发，采用 Poetry 作为依赖管理系统。
 
-当前项目正处于开发阶段，功能尚不完整，请静候佳音。
+当前分支功能尚不完整，暂不提供详细使用教程。
 
 ## 许可证 <sub>Licensing</sub>
 
