@@ -4,6 +4,7 @@
 import os, re, json, hashlib
 from functools import total_ordering
 from collections import defaultdict
+from typing import Sequence
 
 from ..utils.Config import Config
 from ..utils.Profiler import CodeProfiler
@@ -28,17 +29,23 @@ class ArkNetworkConfig:
 
     def __init__(self, network_config_dict: dict):
         # Retrieve config from response
-        content: "dict[str,object]" = json.loads(network_config_dict.get("content"))
-        configs: "dict[str,dict]" = content.get("configs")
+        content: "dict[str,object]" = json.loads(network_config_dict.get("content", "{}"))
+        configs: object = content.get("configs", {})
+        if not isinstance(configs, dict):
+            raise ValueError("Invalid configs format")
+        configs_dict: "dict[str,dict]" = configs
         # Choose the first config with override=True, or the first config if none have override=True
         chosen_config = None
-        for _, config in configs.items():
+        for _, config in configs_dict.items():
             if config.get("override", False):
                 chosen_config = config
                 break
         if not chosen_config:
-            chosen_config = list(configs.values())[0]
-        self._dict: "dict[str,str]" = chosen_config.get("network")
+            chosen_config = list(configs_dict.values())[0]
+        network: "dict[str,str] | None" = chosen_config.get("network")
+        if network is None:
+            raise ValueError("Network config not found in response")
+        self._dict: "dict[str,str]" = network
 
     def get(self, key: str, *args: str):
         value = self._dict.get(key, "")
@@ -62,7 +69,7 @@ class ArkVersion:
     def __init__(self, res: "str|None" = None, client: "str|None" = None):
         self._res = res
         self._client = client
-        if not re.fullmatch(self.REG_RES_VERSION, self.res):
+        if self._res is not None and not re.fullmatch(self.REG_RES_VERSION, self._res):
             raise ValueError("Incorrect resVersion format")
 
     @property
@@ -89,8 +96,10 @@ class ArkVersion:
     def __lt__(self, other):
         if not isinstance(other, ArkVersion):
             raise NotImplementedError()
+        if self.res is None or other.res is None:
+            return False
         res_cmp = self._compare_versions(self.res, other.res)
-        client_cmp = self._compare_versions(self.client, other.client)
+        client_cmp = self._compare_versions(self.client or "", other.client or "")
 
         if res_cmp == 0 and client_cmp == 0:
             return False
@@ -125,7 +134,7 @@ class AssetRepoBase:
         pass
 
     @property
-    def infos(self) -> "list[FileInfoBase]":
+    def infos(self) -> "Sequence[FileInfoBase]":
         raise NotImplementedError()
 
     def get_parent_map(self) -> "dict[FileInfoBase,FileInfoBase]":
@@ -160,7 +169,7 @@ class ArkLocalAssetsRepo(AssetRepoBase):
         self._infos = self._fetch_infos()
 
     @property
-    def infos(self):
+    def infos(self) -> "Sequence[FileInfoBase]":
         return self._infos
 
     @property
@@ -169,12 +178,14 @@ class ArkLocalAssetsRepo(AssetRepoBase):
 
     def detect_res_version(self):
         for i in self.infos:
-            if i.name == "torappu_index.ab" and i.exist():
-                with i.open() as f:
-                    d = f.read().decode(encoding="UTF-8", errors="replace")
-                    matches = re.findall(ArkVersion.REG_RES_VERSION, d)
-                    if len(matches) == 1:
-                        return matches[0]
+            if isinstance(i, ArkLocalFileInfo) and i.name == "torappu_index.ab" and i.exist():
+                f = i.open()
+                if f is not None:
+                    with f:
+                        d = f.read().decode(encoding="UTF-8", errors="replace")
+                        matches = re.findall(ArkVersion.REG_RES_VERSION, d)
+                        if len(matches) == 1:
+                            return matches[0]
                 break
 
     def _fetch_infos(self):
@@ -183,12 +194,13 @@ class ArkLocalAssetsRepo(AssetRepoBase):
             if not os.path.isdir(self._root_dir):
                 raise FileNotFoundError(self._root_dir)
             infos: "list[ArkLocalFileInfo]" = []
+            local_ignore = Config.get("local_ignore") or []
             for root, _, files in os.walk(self._root_dir):
                 for f in files:
                     name = os.path.realpath(os.path.join(root, f))
                     name = os.path.relpath(name, self._root_dir)
                     name.replace("\\", "/")
-                    if any(re.match(p, name) for p in Config.get("local_ignore")):
+                    if any(re.match(p, name) for p in local_ignore):
                         continue
                     infos.append(ArkLocalFileInfo(name, self._root_dir))
             return infos
@@ -201,12 +213,14 @@ class ArkRemoteAssetsRepo(AssetRepoBase):
         super().__init__()
         # Estimated RT: 0.01-0.02s (very fast)
         with CodeProfiler("get_infos_remote"):
-            self._infos: "list[ArkRemoteFileInfo]" = [ArkRemoteFileInfo(i) for i in hot_update_list_dict.get("abInfos")]
-            self._packs: "list[ArkPackInfo]" = [ArkPackInfo(i) for i in hot_update_list_dict.get("packInfos")]
+            ab_infos = hot_update_list_dict.get("abInfos", [])
+            pack_infos = hot_update_list_dict.get("packInfos", [])
+            self._infos: "list[ArkRemoteFileInfo]" = [ArkRemoteFileInfo(i) for i in ab_infos]
+            self._packs: "list[ArkPackInfo]" = [ArkPackInfo(i) for i in pack_infos]
             self._version: ArkVersion = ArkVersion(res=hot_update_list_dict.get("versionId"))
 
     @property
-    def infos(self):
+    def infos(self) -> "Sequence[FileInfoBase]":
         return self._infos
 
     @property
@@ -265,10 +279,12 @@ class FileInfoBase:
     def get_file_size_str(self, digits: int = 0):
         try:
             s = self.file_size
-            for i in FileInfoBase.UNITS:
+            i = FileInfoBase.UNITS[0]
+            for unit in FileInfoBase.UNITS:
                 if s > FileInfoBase.RADIX:
                     s /= FileInfoBase.RADIX
                 else:
+                    i = unit
                     break
             return f"{s:.{digits}f} {i}"
         except NotImplementedError:
@@ -354,14 +370,20 @@ class ArkRemoteFileInfo(FileInfoBase):
 
     def __init__(self, info_dict: dict):
         super().__init__()
-        self._name: str = info_dict.get("name")  # Required
+        name = info_dict.get("name")
+        md5 = info_dict.get("md5")
+        total_size = info_dict.get("totalSize")
+        ab_size = info_dict.get("abSize")
+        if name is None or md5 is None or total_size is None or ab_size is None:
+            raise ValueError("Required field missing in info_dict")
+        self._name: str = name  # Required
         # Unused self._hash:str = info_dict.get('hash') # Required
-        self._md5: str = info_dict.get("md5")  # Required
-        self._data_size: int = int(info_dict.get("totalSize"))  # Required
-        self._file_size: int = int(info_dict.get("abSize"))  # Required
+        self._md5: str = md5  # Required
+        self._data_size: int = int(total_size)  # Required
+        self._file_size: int = int(ab_size)  # Required
         # Unused self._thash:str = info_dict.get('thash', None)
-        self._type: str = info_dict.get("type", None)
-        self._pack: str = info_dict.get("pid", None)
+        self._type: "str | None" = info_dict.get("type", None)
+        self._pack: "str | None" = info_dict.get("pid", None)
         # Unused self._cid:int = info_dict.get('cid') # Required
 
     @property
@@ -386,11 +408,11 @@ class ArkRemoteFileInfo(FileInfoBase):
 
     @property
     def type(self):
-        return self._type
+        return self._type or ""
 
     @property
     def pack(self):
-        return self._pack
+        return self._pack or ""
 
     @property
     def data_name(self):
@@ -404,8 +426,12 @@ class ArkRemoteFileInfo(FileInfoBase):
 
 class ArkPackInfo:
     def __init__(self, info_dict: dict):
-        self._name: str = info_dict.get("name")  # Required
-        self._data_size: int = int(info_dict.get("totalSize"))  # Required
+        name = info_dict.get("name")
+        total_size = info_dict.get("totalSize")
+        if name is None or total_size is None:
+            raise ValueError("Required field missing in info_dict")
+        self._name: str = name  # Required
+        self._data_size: int = int(total_size)  # Required
         # Unused self._cid:int = info_dict.get('cid') # Required
 
     @property
@@ -446,19 +472,23 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
         self._remote = remote
 
     @property
-    def infos(self):
+    def infos(self) -> "Sequence[FileInfoBase]":
         # Estimated RT: 0.01-0.07s (very fast)
         with CodeProfiler("get_infos_integrated"):
-            name2local = {l.name: l for l in self._local.infos}
-            name2remote = {r.name: r for r in self._remote.infos}
+            name2local = {l.name: l for l in self._local.infos if isinstance(l, ArkLocalFileInfo)}
+            name2remote = {r.name: r for r in self._remote.infos if isinstance(r, ArkRemoteFileInfo)}
             infos: "list[ArkIntegratedFileInfo]" = []
-            for l in self._local.infos:
-                r = name2remote.get(l.name, None)
-                infos.append(ArkIntegratedFileInfo(l, r))
-            for r in self._remote.infos:
-                if r.name not in name2local:
-                    l = ArkLocalFileInfo(r.name, self._local.root_dir)
-                    infos.append(ArkIntegratedFileInfo(l, r))
+            for l_item in self._local.infos:
+                if isinstance(l_item, ArkLocalFileInfo):
+                    r = name2remote.get(l_item.name, None)
+                    if r is not None:
+                        infos.append(ArkIntegratedFileInfo(l_item, r))
+                    else:
+                        infos.append(ArkIntegratedFileInfo(l_item, None))
+            for r_item in self._remote.infos:
+                if isinstance(r_item, ArkRemoteFileInfo) and r_item.name not in name2local:
+                    l = ArkLocalFileInfo(r_item.name, self._local.root_dir)
+                    infos.append(ArkIntegratedFileInfo(l, r_item))
             return infos
 
     @property
@@ -473,7 +503,7 @@ class ArkIntegratedAssetRepo(AssetRepoBase):
 class ArkIntegratedFileInfo(FileInfoBase):
     """Arknights integrated file information record."""
 
-    def __init__(self, local: ArkLocalFileInfo, remote: ArkRemoteFileInfo = None):
+    def __init__(self, local: ArkLocalFileInfo, remote: "ArkRemoteFileInfo | None" = None):
         super().__init__()
         if local is None:
             raise ValueError("Argument local is none")
@@ -517,9 +547,9 @@ class ArkIntegratedFileInfo(FileInfoBase):
         if not s_local:
             return FileStatus.ADD if s_remote else FileStatus.DELETED
         # Check file size consistency
-        if s_local == s_remote:
+        if s_local == s_remote and self._remote:
             md5_local = self.local.md5
-            md5_remote = self.remote.md5
+            md5_remote = self._remote.md5
             # Check MD5 consistency
             if md5_local == md5_remote or len(md5_local) != len(md5_remote):  # MD5 unavailable
                 return (

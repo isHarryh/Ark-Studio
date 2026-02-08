@@ -29,8 +29,8 @@ class ArkClient:
         :param device: The device tag of the client;
         """
         self._session: requests.Session = requests.Session()
-        self._version: acp.ArkVersion = None
-        self._config: acp.ArkNetworkConfig = None
+        self._version: "acp.ArkVersion | None" = None
+        self._config: "acp.ArkNetworkConfig | None" = None
         self._device: str = device
 
     def _fetch_bytes(self, url: str):
@@ -94,7 +94,7 @@ class ArkClient:
             self._fetch_dict(f"{self._config.get('hu')}/{self._device}/assets/{self._version.res}/hot_update_list.json")
         )
 
-    def set_current_network_config(self, config: acp.ArkNetworkConfig = None):
+    def set_current_network_config(self, config: "acp.ArkNetworkConfig | None" = None):
         """Sets the network config of the client.
 
         :param config: The network config. If `None`, an fetching from the remote will be performed;
@@ -103,7 +103,7 @@ class ArkClient:
             config = self.get_remote_network_config()
         self._config = config
 
-    def set_current_version(self, version: acp.ArkVersion = None):
+    def set_current_version(self, version: "acp.ArkVersion | None" = None):
         """Sets the version info of the client.
 
         :param version: The new version. If `None`, an fetching from the remote will be performed;
