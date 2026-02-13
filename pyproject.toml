@@ -1,0 +1,27 @@
+[project]
+name = "ArkStudio"
+version = "0.1.0"
+description = "Arknights Assets Studio"
+authors = [
+    { name = "Harry Huang", email = "harryhuang2652@qq.com" }
+]
+license = "BSD-3-Clause"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi[standard] (>=0.128.8,<0.129.0)",
+    "flatbuffers (>=25.12,<25.13)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "loguru (>=0.7.3,<0.8.0)",
+    "nicegui (>=3.7,<4.0)",
+    "Pillow (>=11.3,<11.4)",
+    "sqlmodel (>=0.0.33,<0.1.0)",
+    "UnityPy (>=1.24,<1.25)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
